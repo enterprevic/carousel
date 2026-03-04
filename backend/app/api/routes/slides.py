@@ -42,6 +42,8 @@ async def update_slide(
         slide.body = body.body
     if body.footer_cta is not None:
         slide.footer_cta = body.footer_cta
+    if body.overrides is not None:
+        slide.overrides = body.overrides.model_dump(exclude_none=True)
     slide.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(slide)

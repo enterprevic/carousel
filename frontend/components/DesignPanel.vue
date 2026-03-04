@@ -6,7 +6,7 @@
         class="px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-150"
         :class="activeTab === tab.key
           ? 'bg-[#0071e3] text-white shadow-sm'
-          : 'text-[#6e6e73] hover:bg-black/5'"
+          : 'text-[#3a3a3c] hover:bg-black/5'"
         @click="activeTab = tab.key">
         {{ tab.label }}
       </button>
@@ -15,22 +15,52 @@
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
 
+      <!-- Size -->
+      <template v-if="activeTab === 'size'">
+        <div>
+          <label class="label">Image Size</label>
+          <div class="flex flex-col gap-2">
+            <button v-for="s in sizeOptions" :key="s.key"
+              class="flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-150 text-left"
+              :class="(localDesign.aspect_ratio ?? '4:5') === s.key
+                ? 'border-[#0071e3] bg-[#0071e3]/5 shadow-sm'
+                : 'border-[#e5e5ea] hover:border-[#d2d2d7] bg-white'"
+              @click="localDesign.aspect_ratio = s.key">
+              <div class="shrink-0 flex items-center justify-center w-8"
+                :class="(localDesign.aspect_ratio ?? '4:5') === s.key ? 'text-[#0071e3]' : 'text-[#8e8e93]'">
+                <!-- Mini aspect ratio visual -->
+                <div class="border-2 rounded"
+                  :class="(localDesign.aspect_ratio ?? '4:5') === s.key ? 'border-[#0071e3]' : 'border-[#c6c6c8]'"
+                  :style="s.key === '4:5'  ? 'width:16px;height:20px' :
+                          s.key === '9:16' ? 'width:12px;height:20px' :
+                                             'width:20px;height:20px'" />
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-[#1c1c1e]">{{ s.label }}</div>
+                <div class="text-xs text-[#6c6c70]">{{ s.sub }}</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </template>
+
       <!-- Template -->
       <template v-if="activeTab === 'template'">
         <div>
           <label class="label">Template</label>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <button v-for="t in templates" :key="t.key"
               class="rounded-xl overflow-hidden border-2 transition-all duration-150"
               :class="localDesign.template === t.key
                 ? 'border-[#0071e3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
                 : 'border-[#e5e5ea] hover:border-[#d2d2d7]'"
               @click="setTemplate(t.key)">
-              <div class="h-14 flex flex-col items-center justify-center gap-0.5 px-2" :style="{ background: t.bg }">
-                <div class="font-bold truncate w-full text-center" :style="{ color: t.title, fontSize: '6px' }">TITLE</div>
-                <div class="truncate w-full text-center" :style="{ color: t.body, fontSize: '5px' }">Body text here</div>
+              <div class="h-16 flex flex-col justify-center gap-1 px-2.5" :style="{ background: t.bg, fontFamily: t.font }">
+                <div class="font-bold leading-none truncate" :style="{ color: t.title, fontSize: '7px' }">TITLE TEXT</div>
+                <div class="leading-none truncate" :style="{ color: t.body, fontSize: '5.5px' }">Body content here</div>
+                <div class="font-semibold leading-none truncate" :style="{ color: t.accent, fontSize: '5px' }">Call to action</div>
               </div>
-              <div class="py-1.5 text-center text-[10px] font-medium text-[#6e6e73] bg-white">
+              <div class="py-1.5 text-center text-[10px] font-semibold text-[#3a3a3c] bg-white">
                 {{ t.label }}
               </div>
             </button>
@@ -83,6 +113,86 @@
         </div>
       </template>
 
+      <!-- Pattern -->
+      <template v-if="activeTab === 'pattern'">
+        <div>
+          <label class="label">Background Pattern</label>
+          <div class="grid grid-cols-4 gap-1.5 mb-4">
+            <button v-for="p in patternOptions" :key="p.key"
+              class="flex flex-col items-center gap-1 py-2 rounded-xl border-2 transition-all duration-150"
+              :class="(localDesign.pattern ?? 'none') === p.key
+                ? 'border-[#0071e3] bg-[#0071e3]/5'
+                : 'border-[#e5e5ea] hover:border-[#d2d2d7] bg-white'"
+              @click="localDesign.pattern = p.key">
+              <span class="text-base leading-none" :style="(localDesign.pattern ?? 'none') === p.key ? 'color:#0071e3' : 'color:#3a3a3c'">{{ p.icon }}</span>
+              <span class="text-[9px] font-medium" :style="(localDesign.pattern ?? 'none') === p.key ? 'color:#0071e3' : 'color:#6c6c70'">{{ p.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="localDesign.pattern && localDesign.pattern !== 'none'">
+          <label class="label">Pattern Color</label>
+          <div class="flex items-center gap-2.5 mb-4">
+            <div class="relative shrink-0">
+              <div class="w-9 h-9 rounded-xl border border-[#d2d2d7] overflow-hidden cursor-pointer shadow-sm">
+                <input type="color" v-model="localDesign.pattern_color"
+                  class="absolute inset-0 w-full h-full cursor-pointer opacity-0" />
+                <div class="w-full h-full" :style="{ backgroundColor: localDesign.pattern_color }" />
+              </div>
+            </div>
+            <input v-model="localDesign.pattern_color" class="input font-mono text-sm" placeholder="#000000" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="label mb-0">Pattern Opacity</label>
+              <span class="text-xs text-[#0071e3] font-semibold">{{ Math.round((localDesign.pattern_opacity ?? 0.06) * 100) }}%</span>
+            </div>
+            <input type="range" v-model.number="localDesign.pattern_opacity" min="0.01" max="0.5" step="0.01" />
+          </div>
+        </div>
+
+        <div>
+          <label class="label">Accent Color</label>
+          <p class="text-[11px] text-[#6c6c70] mb-2">Overrides the template's default accent (used for CTA text).</p>
+          <div class="flex items-center gap-2.5">
+            <div class="relative shrink-0">
+              <div class="w-9 h-9 rounded-xl border border-[#d2d2d7] overflow-hidden cursor-pointer shadow-sm">
+                <input type="color" :value="localDesign.accent_color || '#0071e3'"
+                  class="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                  @input="localDesign.accent_color = ($event.target as HTMLInputElement).value" />
+                <div class="w-full h-full" :style="{ backgroundColor: localDesign.accent_color || '#e5e5ea' }" />
+              </div>
+            </div>
+            <input :value="localDesign.accent_color || ''"
+              class="input font-mono text-sm" placeholder="Template default"
+              @input="localDesign.accent_color = ($event.target as HTMLInputElement).value || null" />
+            <button v-if="localDesign.accent_color" class="text-xs text-[#ff3b30] font-medium whitespace-nowrap"
+              @click="localDesign.accent_color = null">Reset</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="label">Title Highlight</label>
+          <p class="text-[11px] text-[#6c6c70] mb-2">Adds a background color behind the title text (marker effect).</p>
+          <div class="flex items-center gap-2.5">
+            <div class="relative shrink-0">
+              <div class="w-9 h-9 rounded-xl border border-[#d2d2d7] overflow-hidden cursor-pointer shadow-sm">
+                <input type="color" :value="localDesign.title_highlight || '#ffff00'"
+                  class="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                  @input="localDesign.title_highlight = ($event.target as HTMLInputElement).value" />
+                <div class="w-full h-full" :style="{ backgroundColor: localDesign.title_highlight || '#e5e5ea' }" />
+              </div>
+            </div>
+            <input :value="localDesign.title_highlight || ''"
+              class="input font-mono text-sm" placeholder="No highlight"
+              @input="localDesign.title_highlight = ($event.target as HTMLInputElement).value || null" />
+            <button v-if="localDesign.title_highlight" class="text-xs text-[#ff3b30] font-medium whitespace-nowrap"
+              @click="localDesign.title_highlight = null">Remove</button>
+          </div>
+        </div>
+      </template>
+
       <!-- Layout -->
       <template v-if="activeTab === 'layout'">
         <div>
@@ -100,7 +210,7 @@
               class="flex-1 py-2 text-xs rounded-xl border transition-all duration-150"
               :class="localDesign.align_h === a
                 ? 'bg-[#0071e3] text-white border-[#0071e3]'
-                : 'bg-white text-[#6e6e73] border-[#e5e5ea] hover:border-[#d2d2d7]'"
+                : 'bg-white text-[#3a3a3c] border-[#c6c6c8] hover:border-[#8e8e93]'"
               @click="localDesign.align_h = a as any">
               <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path v-if="a === 'left'"    stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M3 12h12M3 18h8" />
@@ -118,9 +228,48 @@
               class="flex-1 py-2 text-xs rounded-xl border capitalize transition-all duration-150"
               :class="localDesign.align_v === a
                 ? 'bg-[#0071e3] text-white border-[#0071e3]'
-                : 'bg-white text-[#6e6e73] border-[#e5e5ea] hover:border-[#d2d2d7]'"
+                : 'bg-white text-[#3a3a3c] border-[#c6c6c8] hover:border-[#8e8e93]'"
               @click="localDesign.align_v = a as any">
               {{ a }}
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Fonts -->
+      <template v-if="activeTab === 'fonts'">
+        <div>
+          <label class="label">Title Font</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button v-for="f in fontOptions" :key="f.key"
+              class="rounded-xl border-2 py-2 px-2 text-left transition-all duration-150"
+              :class="(localDesign.title_font ?? 'system') === f.key
+                ? 'border-[#0071e3] bg-[#0071e3]/5 shadow-sm'
+                : 'border-[#e5e5ea] hover:border-[#d2d2d7] bg-white'"
+              @click="localDesign.title_font = f.key">
+              <div class="text-base font-bold leading-none mb-0.5 text-[#1c1c1e]"
+                :style="{ fontFamily: FONT_FAMILIES[f.key] }">
+                {{ f.sample }}
+              </div>
+              <div class="text-[10px] text-[#6c6c70] truncate">{{ f.label }}</div>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="label">Body Font</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button v-for="f in fontOptions" :key="f.key"
+              class="rounded-xl border-2 py-2 px-2 text-left transition-all duration-150"
+              :class="(localDesign.body_font ?? 'system') === f.key
+                ? 'border-[#0071e3] bg-[#0071e3]/5 shadow-sm'
+                : 'border-[#e5e5ea] hover:border-[#d2d2d7] bg-white'"
+              @click="localDesign.body_font = f.key">
+              <div class="text-base leading-none mb-0.5 text-[#1c1c1e]"
+                :style="{ fontFamily: FONT_FAMILIES[f.key] }">
+                {{ f.sample }}
+              </div>
+              <div class="text-[10px] text-[#6c6c70] truncate">{{ f.label }}</div>
             </button>
           </div>
         </div>
@@ -130,7 +279,7 @@
       <template v-if="activeTab === 'extras'">
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-[#1d1d1f]">Header</span>
+            <span class="text-sm font-medium text-[#1c1c1e]">Header</span>
             <button class="relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-150"
               :class="localDesign.show_header ? 'bg-[#0071e3]' : 'bg-[#e5e5ea]'"
               @click="localDesign.show_header = !localDesign.show_header">
@@ -144,7 +293,7 @@
 
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-[#1d1d1f]">Footer</span>
+            <span class="text-sm font-medium text-[#1c1c1e]">Footer</span>
             <button class="relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-150"
               :class="localDesign.show_footer ? 'bg-[#0071e3]' : 'bg-[#e5e5ea]'"
               @click="localDesign.show_footer = !localDesign.show_footer">
@@ -159,24 +308,21 @@
     </div>
 
     <!-- Actions -->
-    <div class="shrink-0 px-4 pb-4 pt-3 border-t border-[#f5f5f7] space-y-2">
+    <div class="shrink-0 px-4 pb-4 pt-3 border-t border-[#f2f2f7]">
       <button class="btn-secondary w-full text-sm" @click="$emit('apply-to-all', { ...localDesign })">
         Apply to All Slides
-      </button>
-      <button class="btn-primary w-full text-sm" :disabled="saving" @click="$emit('save', { ...localDesign })">
-        {{ saving ? 'Saving…' : 'Save Design' }}
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CarouselDesign } from "~/types"
+import type { CarouselDesign, FontChoice, Pattern } from "~/types"
+import { FONT_FAMILIES } from "~/types"
 
-const props = defineProps<{ modelValue: CarouselDesign; saving?: boolean }>()
+const props = defineProps<{ modelValue: CarouselDesign }>()
 const emit = defineEmits<{
   "update:modelValue": [CarouselDesign]
-  save: [CarouselDesign]
   "apply-to-all": [CarouselDesign]
 }>()
 
@@ -191,22 +337,61 @@ watch(() => props.modelValue, (v) => Object.assign(localDesign, v), { deep: true
 watch(localDesign, (v) => emit("update:modelValue", { ...v }), { deep: true })
 
 const tabs = [
+  { key: "size",       label: "Size" },
   { key: "template",   label: "Template" },
   { key: "background", label: "Background" },
+  { key: "pattern",    label: "Pattern" },
   { key: "layout",     label: "Layout" },
+  { key: "fonts",      label: "Fonts" },
   { key: "extras",     label: "Header/Footer" },
 ]
 
+const patternOptions: { key: Pattern; label: string; icon: string }[] = [
+  { key: "none",  label: "None",   icon: "✕" },
+  { key: "dots1", label: "Dots S", icon: "·" },
+  { key: "dots2", label: "Dots M", icon: "•" },
+  { key: "dots3", label: "Dots L", icon: "●" },
+  { key: "grid",  label: "Grid",   icon: "⊞" },
+  { key: "lines", label: "Lines",  icon: "≡" },
+  { key: "cells", label: "Cells",  icon: "⊟" },
+  { key: "blobs", label: "Blobs",  icon: "❍" },
+]
+
+const sizeOptions: { key: "4:5" | "9:16" | "1:1"; label: string; sub: string }[] = [
+  { key: "4:5",  label: "4:5",  sub: "Instagram Feed" },
+  { key: "9:16", label: "9:16", sub: "Stories / Reels" },
+  { key: "1:1",  label: "1:1",  sub: "Square Post" },
+]
+
+const fontOptions: { key: FontChoice; label: string; sample: string }[] = [
+  { key: "system",      label: "System",       sample: "Aa" },
+  { key: "playfair",    label: "Playfair",      sample: "Aa" },
+  { key: "oswald",      label: "Oswald",        sample: "Aa" },
+  { key: "montserrat",  label: "Montserrat",    sample: "Aa" },
+  { key: "opensans",    label: "Open Sans",     sample: "Aa" },
+  { key: "lato",        label: "Lato",          sample: "Aa" },
+  { key: "merriweather",label: "Merriweather",  sample: "Aa" },
+  { key: "georgia",     label: "Georgia",       sample: "Aa" },
+]
+
 const templates = [
-  { key: "classic", label: "Classic", bg: "#ffffff", title: "#1a1a1a", body: "#444444" },
-  { key: "bold",    label: "Bold",    bg: "#0f0f0f", title: "#ffffff", body: "#e0e0e0" },
-  { key: "minimal", label: "Minimal", bg: "#f8f8f6", title: "#222222", body: "#555555" },
+  { key: "bright",   label: "Bright",   bg: "#fff7ed", title: "#1c1917", body: "#44403c", accent: "#f97316", font: "'Roboto Condensed', Arial, sans-serif" },
+  { key: "classic",  label: "Classic",  bg: "#ffffff",  title: "#1a1a1a", body: "#444444", accent: "#2563eb", font: "'Times New Roman', Times, serif" },
+  { key: "comic",    label: "Comic",    bg: "#fef08a", title: "#18181b", body: "#3f3f46", accent: "#7c3aed", font: "'Fredoka', 'Arial Rounded MT Bold', sans-serif" },
+  { key: "elegant",  label: "Elegant",  bg: "#0f172a", title: "#f8fafc", body: "#cbd5e1", accent: "#d4af37", font: "'Times New Roman', Times, serif" },
+  { key: "minimal",  label: "Minimal",  bg: "#f8f8f6", title: "#222222", body: "#555555", accent: "#10b981", font: "'Jost', 'Helvetica Neue', sans-serif" },
+  { key: "notes",    label: "Notes",    bg: "#fefce8", title: "#422006", body: "#78350f", accent: "#d97706", font: "'Caveat', cursive" },
+  { key: "powerful", label: "Powerful", bg: "#09090b", title: "#fafafa", body: "#a1a1aa", accent: "#ef4444", font: "'Space Mono', 'Courier New', monospace" },
 ]
 
 const setTemplate = (key: string) => {
   localDesign.template = key as any
   const t = templates.find((x) => x.key === key)
-  if (t) localDesign.bg_color = t.bg
+  if (t) {
+    localDesign.bg_color = t.bg
+    localDesign.title_font = "system"
+    localDesign.body_font = "system"
+  }
 }
 
 const handleImageUpload = async (e: Event) => {

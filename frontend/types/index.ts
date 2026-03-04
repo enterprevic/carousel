@@ -2,7 +2,7 @@ export type SourceType = "text" | "video" | "links"
 export type CarouselStatus = "draft" | "generating" | "ready" | "failed"
 export type GenerationStatus = "queued" | "running" | "done" | "failed"
 export type ExportStatus = "queued" | "running" | "done" | "failed"
-export type Template = "classic" | "bold" | "minimal"
+export type Template = "bright" | "classic" | "comic" | "elegant" | "minimal" | "notes" | "powerful"
 export type Language = "ru" | "en" | "fr"
 
 export interface CarouselFormat {
@@ -10,6 +10,10 @@ export interface CarouselFormat {
   language: Language
   style_hint: string
 }
+
+export type FontChoice = "system" | "playfair" | "oswald" | "montserrat" | "opensans" | "lato" | "merriweather" | "georgia"
+export type AspectRatio = "4:5" | "9:16" | "1:1"
+export type Pattern = "none" | "dots1" | "dots2" | "dots3" | "grid" | "lines" | "cells" | "blobs"
 
 export interface CarouselDesign {
   template: Template
@@ -23,6 +27,14 @@ export interface CarouselDesign {
   header_text: string
   show_footer: boolean
   footer_text: string
+  title_font: FontChoice
+  body_font: FontChoice
+  aspect_ratio: AspectRatio
+  accent_color: string | null
+  pattern: Pattern
+  pattern_color: string
+  pattern_opacity: number
+  title_highlight: string | null
 }
 
 export interface Carousel {
@@ -37,6 +49,12 @@ export interface Carousel {
   updated_at: string
 }
 
+export interface SlideOverrides {
+  bg_color?: string | null
+  bg_image_url?: string | null
+  darkening?: number | null
+}
+
 export interface Slide {
   id: string
   carousel_id: string
@@ -44,6 +62,7 @@ export interface Slide {
   title: string
   body: string
   footer_cta: string | null
+  overrides: SlideOverrides
   created_at: string
   updated_at: string
 }
@@ -79,4 +98,23 @@ export const DEFAULT_DESIGN: CarouselDesign = {
   header_text: "",
   show_footer: false,
   footer_text: "",
+  title_font: "system",
+  body_font: "system",
+  aspect_ratio: "4:5",
+  accent_color: null,
+  pattern: "none",
+  pattern_color: "#000000",
+  pattern_opacity: 0.06,
+  title_highlight: null,
+}
+
+export const FONT_FAMILIES: Record<string, string> = {
+  system: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif",
+  playfair: "'Playfair Display', Georgia, serif",
+  oswald: "'Oswald', 'Arial Narrow', sans-serif",
+  montserrat: "'Montserrat', 'Helvetica Neue', sans-serif",
+  opensans: "'Open Sans', Helvetica, sans-serif",
+  lato: "'Lato', 'Helvetica Neue', sans-serif",
+  merriweather: "'Merriweather', Georgia, serif",
+  georgia: "Georgia, 'Times New Roman', serif",
 }

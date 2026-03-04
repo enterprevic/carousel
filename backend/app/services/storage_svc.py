@@ -1,6 +1,6 @@
 import uuid
 from app.core.config import settings
-from app.core.storage import get_s3_client, ENDPOINT_URL
+from app.core.storage import get_s3_client
 
 
 async def upload_asset(file_bytes: bytes, content_type: str, filename: str) -> str:
@@ -13,5 +13,6 @@ async def upload_asset(file_bytes: bytes, content_type: str, filename: str) -> s
             Body=file_bytes,
             ContentType=content_type,
         )
-    # Return public URL (bucket policy allows public read)
-    return f"{ENDPOINT_URL}/{settings.minio_bucket}/{key}"
+    # Return public URL using the publicly-reachable host (not internal docker hostname)
+    public_base = settings.minio_public_url.rstrip("/")
+    return f"{public_base}/{settings.minio_bucket}/{key}"

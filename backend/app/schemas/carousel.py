@@ -12,7 +12,7 @@ class CarouselFormat(BaseModel):
 
 
 class CarouselDesign(BaseModel):
-    template: Literal["classic", "bold", "minimal"] = "classic"
+    template: Literal["bright", "classic", "comic", "elegant", "minimal", "notes", "powerful"] = "classic"
     bg_color: str = "#ffffff"
     bg_image_url: Optional[str] = None
     darkening: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -23,6 +23,14 @@ class CarouselDesign(BaseModel):
     header_text: str = ""
     show_footer: bool = False
     footer_text: str = ""
+    title_font: str = "system"
+    body_font: str = "system"
+    aspect_ratio: Literal["4:5", "9:16", "1:1"] = "4:5"
+    accent_color: Optional[str] = None
+    pattern: Optional[Literal["none", "dots1", "dots2", "dots3", "grid", "lines", "cells", "blobs"]] = "none"
+    pattern_color: str = "#000000"
+    pattern_opacity: float = Field(default=0.06, ge=0.0, le=0.5)
+    title_highlight: Optional[str] = None
 
 
 class CarouselCreate(BaseModel):

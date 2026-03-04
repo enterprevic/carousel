@@ -1,15 +1,15 @@
 <template>
-  <div class="min-h-screen bg-[#f5f5f7]">
+  <div class="min-h-screen bg-[#f2f2f7]">
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-[#fbfbfd]/90 backdrop-blur-xl border-b border-black/[0.06]">
       <div class="max-w-2xl mx-auto px-5 h-14 flex items-center gap-3">
         <NuxtLink to="/" class="w-8 h-8 rounded-xl flex items-center justify-center
-          text-[#6e6e73] hover:bg-black/5 transition-colors">
+          text-[#3a3a3c] hover:bg-black/5 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </NuxtLink>
-        <h1 class="font-semibold text-[#1d1d1f] tracking-tight">New Carousel</h1>
+        <h1 class="font-semibold text-[#1c1c1e] tracking-tight">New Carousel</h1>
       </div>
     </header>
 
@@ -23,25 +23,25 @@
                 ? 'bg-[#0071e3] text-white'
                 : step === i
                   ? 'bg-[#0071e3] text-white ring-4 ring-[#0071e3]/20'
-                  : 'bg-[#e5e5ea] text-[#aeaeb2]'">
+                  : 'bg-[#d1d1d6] text-[#3a3a3c]'">
               <svg v-if="step > i" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
               </svg>
               <span v-else>{{ i + 1 }}</span>
             </div>
             <span class="text-xs font-medium hidden sm:block"
-              :class="step >= i ? 'text-[#1d1d1f]' : 'text-[#aeaeb2]'">{{ s }}</span>
+              :class="step >= i ? 'text-[#1c1c1e]' : 'text-[#6c6c70]'">{{ s }}</span>
           </div>
           <div v-if="i < steps.length - 1"
             class="flex-1 h-px mx-1 hidden sm:block transition-colors duration-300"
-            :class="step > i ? 'bg-[#0071e3]' : 'bg-[#e5e5ea]'" />
+            :class="step > i ? 'bg-[#0071e3]' : 'bg-[#d1d1d6]'" />
         </div>
       </div>
 
       <!-- Step 1: Source Type -->
       <div v-if="step === 0">
-        <h2 class="text-2xl font-bold text-[#1d1d1f] tracking-tight mb-1">Choose your source</h2>
-        <p class="text-[#6e6e73] text-sm mb-7">How do you want to create your carousel?</p>
+        <h2 class="text-2xl font-bold text-[#1c1c1e] tracking-tight mb-1">Choose your source</h2>
+        <p class="text-[#3a3a3c] text-sm mb-7">How do you want to create your carousel?</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button v-for="type in sourceTypes" :key="type.key"
             class="relative text-left p-5 rounded-2xl border-2 transition-all duration-150 bg-white"
@@ -50,8 +50,8 @@
               : 'border-transparent shadow-[0_2px_12px_rgba(0,0,0,0.07)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)] hover:-translate-y-0.5'"
             @click="sourceType = type.key">
             <div class="text-2xl mb-3">{{ type.icon }}</div>
-            <h3 class="font-semibold text-[#1d1d1f] text-sm mb-1">{{ type.label }}</h3>
-            <p class="text-[#6e6e73] text-xs leading-relaxed">{{ type.desc }}</p>
+            <h3 class="font-semibold text-[#1c1c1e] text-sm mb-1">{{ type.label }}</h3>
+            <p class="text-[#3a3a3c] text-xs leading-relaxed">{{ type.desc }}</p>
             <div v-if="sourceType === type.key"
               class="absolute top-3 right-3 w-5 h-5 bg-[#0071e3] rounded-full flex items-center justify-center">
               <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,8 +67,8 @@
 
       <!-- Step 2: Content Input -->
       <div v-else-if="step === 1">
-        <h2 class="text-2xl font-bold text-[#1d1d1f] tracking-tight mb-1">Add your content</h2>
-        <p class="text-[#6e6e73] text-sm mb-7">Provide the source material for your carousel</p>
+        <h2 class="text-2xl font-bold text-[#1c1c1e] tracking-tight mb-1">Add your content</h2>
+        <p class="text-[#3a3a3c] text-sm mb-7">Provide the source material for your carousel</p>
 
         <div class="card p-6 space-y-5">
           <div>
@@ -92,7 +92,7 @@
               <input v-model="videoUrl" class="input" placeholder="https://youtube.com/watch?v=…" />
             </div>
             <div>
-              <label class="label">Notes <span class="text-[#aeaeb2] normal-case font-normal tracking-normal">— optional</span></label>
+              <label class="label">Notes <span class="text-[#8e8e93] normal-case font-normal tracking-normal">— optional</span></label>
               <textarea v-model="videoNotes" class="input min-h-[100px] resize-y"
                 placeholder="Key points, timestamps, or context to include…" />
             </div>
@@ -137,8 +137,8 @@
 
       <!-- Step 3: Format -->
       <div v-else-if="step === 2">
-        <h2 class="text-2xl font-bold text-[#1d1d1f] tracking-tight mb-1">Configure format</h2>
-        <p class="text-[#6e6e73] text-sm mb-7">Customize how your carousel will be generated</p>
+        <h2 class="text-2xl font-bold text-[#1c1c1e] tracking-tight mb-1">Configure format</h2>
+        <p class="text-[#3a3a3c] text-sm mb-7">Customize how your carousel will be generated</p>
 
         <div class="card p-6 space-y-7">
           <!-- Slides count -->
@@ -148,7 +148,7 @@
               <span class="text-2xl font-bold text-[#0071e3]">{{ slidesCount }}</span>
             </div>
             <input type="range" v-model.number="slidesCount" min="6" max="10" step="1" />
-            <div class="flex justify-between text-xs text-[#aeaeb2] mt-1.5 px-0.5">
+            <div class="flex justify-between text-xs text-[#6c6c70] mt-1.5 px-0.5">
               <span v-for="n in [6,7,8,9,10]" :key="n"
                 :class="slidesCount === n ? 'text-[#0071e3] font-semibold' : ''">{{ n }}</span>
             </div>
@@ -162,7 +162,7 @@
                 class="flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150"
                 :class="language === lang.code
                   ? 'border-[#0071e3] bg-[#0071e3]/5 text-[#0071e3]'
-                  : 'border-[#e5e5ea] text-[#6e6e73] hover:border-[#d2d2d7]'"
+                  : 'border-[#d1d1d6] text-[#3a3a3c] hover:border-[#c6c6c8]'"
                 @click="language = lang.code">
                 {{ lang.label }}
               </button>
@@ -171,8 +171,8 @@
 
           <!-- Style hint -->
           <div>
-            <label class="label">Writing Style <span class="text-[#aeaeb2] normal-case font-normal tracking-normal">— optional</span></label>
-            <p class="text-xs text-[#aeaeb2] mb-2">Paste a sample text to match its tone and style</p>
+            <label class="label">Writing Style <span class="text-[#8e8e93] normal-case font-normal tracking-normal">— optional</span></label>
+            <p class="text-xs text-[#8e8e93] mb-2">Paste a sample text to match its tone and style</p>
             <textarea v-model="styleHint" class="input min-h-[90px] resize-none"
               placeholder="Paste an example post…" />
           </div>
@@ -187,12 +187,12 @@
           </div>
           <div>
             <p class="text-sm font-medium text-blue-800">~{{ estimatedTokens.toLocaleString() }} tokens</p>
-            <p class="text-xs text-blue-500 mt-0.5">Estimated usage for this generation</p>
+            <p class="text-xs text-blue-700 mt-0.5">Estimated usage for this generation</p>
           </div>
         </div>
 
         <!-- Error -->
-        <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600">
+        <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-800">
           {{ error }}
         </div>
 
