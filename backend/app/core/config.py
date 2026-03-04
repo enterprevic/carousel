@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     minio_secure: bool = False
     minio_public_url: str = "http://localhost:9000"
     frontend_url: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000"
 
     # LLM (OpenAI-compatible)
     llm_api_key: str = ""

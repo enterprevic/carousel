@@ -7,9 +7,26 @@ from pydantic import BaseModel, Field
 
 class SlideOverrides(BaseModel):
     """Per-slide design overrides — any non-None field takes precedence over the carousel design."""
+    # Background
     bg_color: Optional[str] = None
     bg_image_url: Optional[str] = None
     darkening: Optional[float] = Field(None, ge=0.0, le=0.9)
+    # Style
+    template: Optional[str] = None
+    accent_color: Optional[str] = None
+    title_highlight: Optional[str] = None
+    align_h: Optional[str] = None
+    align_v: Optional[str] = None
+    # Pattern
+    pattern: Optional[str] = None
+    pattern_color: Optional[str] = None
+    pattern_opacity: Optional[float] = Field(None, ge=0.0, le=1.0)
+    # Layout
+    padding: Optional[int] = Field(None, ge=0, le=200)
+    show_header: Optional[bool] = None
+    header_text: Optional[str] = None
+    show_footer: Optional[bool] = None
+    footer_text: Optional[str] = None
 
 
 class SlideUpdate(BaseModel):

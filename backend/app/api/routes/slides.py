@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -40,11 +40,11 @@ async def update_slide(
         slide.title = body.title
     if body.body is not None:
         slide.body = body.body
-    if body.footer_cta is not None:
-        slide.footer_cta = body.footer_cta
+    if "footer_cta" in body.model_fields_set:
+        slide.footer_cta = body.footer_cta  # allows null to clear it
     if body.overrides is not None:
         slide.overrides = body.overrides.model_dump(exclude_none=True)
-    slide.updated_at = datetime.utcnow()
+    slide.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(slide)
     return slide

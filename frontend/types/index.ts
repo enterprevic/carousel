@@ -50,9 +50,26 @@ export interface Carousel {
 }
 
 export interface SlideOverrides {
+  // Background
   bg_color?: string | null
   bg_image_url?: string | null
   darkening?: number | null
+  // Style
+  template?: Template | null
+  accent_color?: string | null
+  title_highlight?: string | null
+  align_h?: "left" | "center" | "right" | null
+  align_v?: "top" | "center" | "bottom" | null
+  // Pattern
+  pattern?: Pattern | null
+  pattern_color?: string | null
+  pattern_opacity?: number | null
+  // Layout
+  padding?: number | null
+  show_header?: boolean | null
+  header_text?: string | null
+  show_footer?: boolean | null
+  footer_text?: string | null
 }
 
 export interface Slide {
@@ -83,6 +100,7 @@ export interface Export {
   carousel_id: string
   status: ExportStatus
   file_url: string | null
+  error: string | null
   created_at: string
 }
 

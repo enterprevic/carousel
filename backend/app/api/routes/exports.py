@@ -1,6 +1,9 @@
 import uuid
+import logging
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -39,7 +42,9 @@ async def _run_export(export_id: uuid.UUID, carousel_id: uuid.UUID):
             exp.file_url = file_url
             await db.commit()
         except Exception as e:
+            logger.error("Export %s failed: %s", export_id, e, exc_info=True)
             exp.status = "failed"
+            exp.error = str(e)[:1000]
             await db.commit()
 
 

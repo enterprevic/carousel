@@ -15,22 +15,42 @@ export const useGeneration = () => {
     return await $fetch<Generation>(`${base}/generations/${id}`)
   }
 
-  const pollGeneration = (id: string, onDone: (gen: Generation) => void, onFail: (gen: Generation) => void) => {
-    const interval = setInterval(async () => {
+  const pollGeneration = (
+    id: string,
+    onDone: (gen: Generation) => void,
+    onFail: (gen: Generation) => void,
+    { maxMs = 5 * 60 * 1000 } = {},
+  ) => {
+    let delay = 1000
+    let elapsed = 0
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let stopped = false
+
+    const stop = () => {
+      stopped = true
+      if (timer) clearTimeout(timer)
+    }
+
+    const tick = async () => {
+      if (stopped) return
       try {
         const gen = await getGeneration(id)
-        if (gen.status === "done") {
-          clearInterval(interval)
-          onDone(gen)
-        } else if (gen.status === "failed") {
-          clearInterval(interval)
-          onFail(gen)
-        }
+        if (gen.status === "done") { stop(); onDone(gen); return }
+        if (gen.status === "failed") { stop(); onFail(gen); return }
       } catch {
-        clearInterval(interval)
+        // network error — keep retrying with backoff
       }
-    }, 2000)
-    return () => clearInterval(interval)
+
+      elapsed += delay
+      if (elapsed >= maxMs) { stop(); onFail({ status: "failed" } as Generation); return }
+
+      // exponential backoff: 1s → 2s → 4s → 8s → cap at 10s
+      delay = Math.min(delay * 2, 10_000)
+      timer = setTimeout(tick, delay)
+    }
+
+    timer = setTimeout(tick, delay)
+    return stop
   }
 
   return { startGeneration, getGeneration, pollGeneration }

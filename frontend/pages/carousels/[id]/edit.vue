@@ -29,8 +29,11 @@
             Regenerate
           </button>
 
-          <button v-if="carousel?.status === 'ready'"
-            class="btn-primary text-xs px-3 py-1.5 gap-1.5" :disabled="exporting" @click="handleExport">
+          <button v-if="carousel"
+            class="btn-primary text-xs px-3 py-1.5 gap-1.5"
+            :disabled="exporting || carousel.status !== 'ready'"
+            :title="carousel.status !== 'ready' ? 'Generate slides first to enable export' : ''"
+            @click="handleExport">
             <svg v-if="exporting" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -183,7 +186,8 @@
                   </div>
                 </div>
 
-                <div v-if="savingSlide" class="text-[11px] text-[#8e8e93] text-right">Saving…</div>
+                <div v-if="saveError" class="text-[11px] text-[#ff3b30] text-right">{{ saveError }}</div>
+                <div v-else-if="savingSlide" class="text-[11px] text-[#8e8e93] text-right">Saving…</div>
               </div>
 
               <!-- Navigation -->
@@ -209,7 +213,9 @@
 
           <!-- Design panel -->
           <div class="lg:w-72 shrink-0 bg-white border-t lg:border-t-0 lg:border-l border-black/[0.06] flex flex-col overflow-hidden">
-            <DesignPanel v-model="design" @apply-to-all="saveDesign" />
+            <DesignPanel v-model="design" :active-slide="activeSlide"
+              @apply-to-all="saveDesign"
+              @update:slide-overrides="onSlideOverrides" />
           </div>
         </div>
       </div>
@@ -283,12 +289,31 @@ const editCta = ref("")
 const editOverrideBgColor = ref("")
 const editOverrideBgImage = ref<string | null>(null)
 const editOverrideDarkening = ref<number | null>(null)
+// Per-slide style overrides
+const editOverrideTemplate = ref<string | null>(null)
+const editOverrideAccent = ref<string | null>(null)
+const editOverrideTitleHighlight = ref<string | null>(null)
+const editOverrideAlignH = ref<string | null>(null)
+const editOverrideAlignV = ref<string | null>(null)
+const editOverridePattern = ref<string | null>(null)
+const editOverridePatternColor = ref<string | null>(null)
+const editOverridePatternOpacity = ref<number | null>(null)
+// Per-slide layout overrides
+const editOverridePadding = ref<number | null>(null)
+const editOverrideShowHeader = ref<boolean | null>(null)
+const editOverrideHeaderText = ref<string | null>(null)
+const editOverrideShowFooter = ref<boolean | null>(null)
+const editOverrideFooterText = ref<string | null>(null)
 
 const activeSlide = computed(() => slides.value[activeIndex.value] ?? null)
 
 const hasOverride = computed(() => {
-  const s = activeSlide.value
-  return !!(s?.overrides?.bg_color || s?.overrides?.bg_image_url || s?.overrides?.darkening != null)
+  const o = activeSlide.value?.overrides
+  if (!o) return false
+  return !!(o.bg_color || o.bg_image_url || o.darkening != null ||
+    o.template || o.accent_color || o.title_highlight || o.align_h || o.align_v ||
+    o.pattern || o.pattern_color || o.pattern_opacity != null ||
+    o.padding != null || o.show_header != null || o.show_footer != null)
 })
 
 const syncEditorFromSlide = (s: Slide | null) => {
@@ -299,6 +324,19 @@ const syncEditorFromSlide = (s: Slide | null) => {
   editOverrideBgColor.value = s.overrides?.bg_color || ""
   editOverrideBgImage.value = s.overrides?.bg_image_url || null
   editOverrideDarkening.value = s.overrides?.darkening ?? null
+  editOverrideTemplate.value = s.overrides?.template || null
+  editOverrideAccent.value = s.overrides?.accent_color || null
+  editOverrideTitleHighlight.value = s.overrides?.title_highlight || null
+  editOverrideAlignH.value = s.overrides?.align_h || null
+  editOverrideAlignV.value = s.overrides?.align_v || null
+  editOverridePattern.value = s.overrides?.pattern || null
+  editOverridePatternColor.value = s.overrides?.pattern_color || null
+  editOverridePatternOpacity.value = s.overrides?.pattern_opacity ?? null
+  editOverridePadding.value = s.overrides?.padding ?? null
+  editOverrideShowHeader.value = s.overrides?.show_header ?? null
+  editOverrideHeaderText.value = s.overrides?.header_text ?? null
+  editOverrideShowFooter.value = s.overrides?.show_footer ?? null
+  editOverrideFooterText.value = s.overrides?.footer_text ?? null
 }
 
 watch(activeSlide, syncEditorFromSlide)
@@ -329,21 +367,39 @@ const saveTitle = async () => {
   await updateCarousel(carouselId, { title: editableTitle.value })
 }
 
+const saveError = ref<string | null>(null)
+
 const saveSlide = async () => {
   const slide = activeSlide.value
   if (!slide) return
   savingSlide.value = true
+  saveError.value = null
   try {
     const overrides: Record<string, any> = {}
     if (editOverrideBgColor.value) overrides.bg_color = editOverrideBgColor.value
     if (editOverrideBgImage.value) overrides.bg_image_url = editOverrideBgImage.value
     if (editOverrideDarkening.value != null) overrides.darkening = editOverrideDarkening.value
+    if (editOverrideTemplate.value) overrides.template = editOverrideTemplate.value
+    if (editOverrideAccent.value) overrides.accent_color = editOverrideAccent.value
+    if (editOverrideTitleHighlight.value) overrides.title_highlight = editOverrideTitleHighlight.value
+    if (editOverrideAlignH.value) overrides.align_h = editOverrideAlignH.value
+    if (editOverrideAlignV.value) overrides.align_v = editOverrideAlignV.value
+    if (editOverridePattern.value) overrides.pattern = editOverridePattern.value
+    if (editOverridePatternColor.value) overrides.pattern_color = editOverridePatternColor.value
+    if (editOverridePatternOpacity.value != null) overrides.pattern_opacity = editOverridePatternOpacity.value
+    if (editOverridePadding.value != null) overrides.padding = editOverridePadding.value
+    if (editOverrideShowHeader.value != null) overrides.show_header = editOverrideShowHeader.value
+    if (editOverrideHeaderText.value != null) overrides.header_text = editOverrideHeaderText.value
+    if (editOverrideShowFooter.value != null) overrides.show_footer = editOverrideShowFooter.value
+    if (editOverrideFooterText.value != null) overrides.footer_text = editOverrideFooterText.value
 
     const updated = await $fetch<Slide>(
       `${config.public.apiBase}/carousels/${carouselId}/slides/${slide.id}`,
       { method: "PATCH", body: { title: editTitle.value, body: editBody.value, footer_cta: editCta.value || null, overrides } }
     )
     slides.value[activeIndex.value] = updated
+  } catch (e: any) {
+    saveError.value = e?.data?.detail || "Failed to save slide"
   } finally {
     savingSlide.value = false
   }
@@ -353,6 +409,37 @@ const clearOverride = async () => {
   editOverrideBgColor.value = ""
   editOverrideBgImage.value = null
   editOverrideDarkening.value = null
+  editOverrideTemplate.value = null
+  editOverrideAccent.value = null
+  editOverrideTitleHighlight.value = null
+  editOverrideAlignH.value = null
+  editOverrideAlignV.value = null
+  editOverridePattern.value = null
+  editOverridePatternColor.value = null
+  editOverridePatternOpacity.value = null
+  editOverridePadding.value = null
+  editOverrideShowHeader.value = null
+  editOverrideHeaderText.value = null
+  editOverrideShowFooter.value = null
+  editOverrideFooterText.value = null
+  await saveSlide()
+}
+
+// Called by DesignPanel when slide style overrides change
+const onSlideOverrides = async (ov: import("~/types").SlideOverrides) => {
+  editOverrideTemplate.value = ov.template ?? null
+  editOverrideAccent.value = ov.accent_color ?? null
+  editOverrideTitleHighlight.value = ov.title_highlight ?? null
+  editOverrideAlignH.value = ov.align_h ?? null
+  editOverrideAlignV.value = ov.align_v ?? null
+  editOverridePattern.value = ov.pattern ?? null
+  editOverridePatternColor.value = ov.pattern_color ?? null
+  editOverridePatternOpacity.value = ov.pattern_opacity ?? null
+  editOverridePadding.value = ov.padding ?? null
+  editOverrideShowHeader.value = ov.show_header ?? null
+  editOverrideHeaderText.value = ov.header_text ?? null
+  editOverrideShowFooter.value = ov.show_footer ?? null
+  editOverrideFooterText.value = ov.footer_text ?? null
   await saveSlide()
 }
 
@@ -366,8 +453,9 @@ const handleSlideImageUpload = async (e: Event) => {
     const resp = await $fetch<{ url: string }>(`${config.public.apiBase}/assets/upload`, { method: "POST", body: form })
     editOverrideBgImage.value = resp.url
     await saveSlide()
-  } catch { alert("Upload failed") }
-  finally {
+  } catch (e: any) {
+    saveError.value = e?.data?.detail || "Upload failed. Check file type and size."
+  } finally {
     uploadingSlide.value = false
     if (slideFileInput.value) slideFileInput.value.value = ""
   }
@@ -393,7 +481,10 @@ const startPollGeneration = (genId: string) => {
   )
 }
 
-const handleRegenerate = async () => startPollGeneration((await startGeneration(carouselId)).id)
+const handleRegenerate = async () => {
+  if (!confirm("Regenerate slides? Your current slide text edits will be replaced.")) return
+  startPollGeneration((await startGeneration(carouselId)).id)
+}
 
 const handleExport = async () => {
   exporting.value = true
@@ -403,7 +494,11 @@ const handleExport = async () => {
     exportStatus.value = "Rendering…"
     pollExport(exp.id,
       (done) => { exporting.value = false; if (done.file_url) exportUrl.value = done.file_url },
-      () => { exporting.value = false; alert("Export failed. Please try again.") }
+      (failed) => {
+        exporting.value = false
+        const reason = (failed as any)?.error
+        alert(reason ? `Export failed: ${reason}` : "Export failed. Please try again.")
+      }
     )
   } catch { exporting.value = false; alert("Export failed.") }
 }

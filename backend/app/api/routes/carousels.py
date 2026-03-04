@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,9 +16,11 @@ router = APIRouter(prefix="/carousels", tags=["carousels"])
 async def list_carousels(
     status: Optional[str] = None,
     lang: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
     db: AsyncSession = Depends(get_db),
 ):
-    q = select(Carousel).order_by(Carousel.created_at.desc())
+    q = select(Carousel).order_by(Carousel.created_at.desc()).limit(limit).offset(offset)
     if status:
         q = q.where(Carousel.status == status)
     if lang:
@@ -62,7 +64,7 @@ async def update_carousel(carousel_id: uuid.UUID, body: CarouselUpdate, db: Asyn
         c.format = body.format.model_dump()
     if body.design is not None:
         c.design = body.design.model_dump()
-    c.updated_at = datetime.utcnow()
+    c.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(c)
     return c
@@ -74,7 +76,7 @@ async def update_design(carousel_id: uuid.UUID, body: CarouselDesign, db: AsyncS
     if not c:
         raise HTTPException(404, "Carousel not found")
     c.design = body.model_dump()
-    c.updated_at = datetime.utcnow()
+    c.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(c)
     return c

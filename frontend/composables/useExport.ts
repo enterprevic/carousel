@@ -18,23 +18,39 @@ export const useExport = () => {
   const pollExport = (
     id: string,
     onDone: (exp: Export) => void,
-    onFail: () => void,
+    onFail: (exp?: Export) => void,
+    { maxMs = 10 * 60 * 1000 } = {},
   ) => {
-    const interval = setInterval(async () => {
+    let delay = 1000
+    let elapsed = 0
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let stopped = false
+
+    const stop = () => {
+      stopped = true
+      if (timer) clearTimeout(timer)
+    }
+
+    const tick = async () => {
+      if (stopped) return
       try {
         const exp = await getExport(id)
-        if (exp.status === "done") {
-          clearInterval(interval)
-          onDone(exp)
-        } else if (exp.status === "failed") {
-          clearInterval(interval)
-          onFail()
-        }
+        if (exp.status === "done") { stop(); onDone(exp); return }
+        if (exp.status === "failed") { stop(); onFail(exp); return }
       } catch {
-        clearInterval(interval)
+        // network error — keep retrying with backoff
       }
-    }, 2000)
-    return () => clearInterval(interval)
+
+      elapsed += delay
+      if (elapsed >= maxMs) { stop(); onFail(); return } // timed out
+
+      // exponential backoff: 1s → 2s → 4s → 8s → cap at 10s
+      delay = Math.min(delay * 2, 10_000)
+      timer = setTimeout(tick, delay)
+    }
+
+    timer = setTimeout(tick, delay)
+    return stop
   }
 
   return { startExport, getExport, pollExport }

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import String, DateTime, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -20,8 +20,8 @@ class Carousel(Base):
         SAEnum("draft", "generating", "ready", "failed", name="carousel_status_enum"),
         default="draft",
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     slides: Mapped[list["Slide"]] = relationship("Slide", back_populates="carousel", cascade="all, delete-orphan", order_by="Slide.order")
     generations: Mapped[list["Generation"]] = relationship("Generation", back_populates="carousel", cascade="all, delete-orphan")

@@ -5,16 +5,16 @@
       class="absolute inset-0 z-10" :style="{ background: `rgba(0,0,0,${effectiveDarkening})` }" />
 
     <!-- Pattern overlay -->
-    <div v-if="design.pattern && design.pattern !== 'none'"
+    <div v-if="patternStyle.backgroundImage"
       class="absolute inset-0 z-10 pointer-events-none"
       :style="patternStyle" />
 
     <!-- Header -->
-    <div v-if="design.show_header && design.header_text"
+    <div v-if="effectiveShowHeader && effectiveHeaderText"
       class="absolute top-0 left-0 right-0 z-20 px-4 pt-3"
-      :style="{ textAlign: design.align_h }">
+      :style="{ textAlign: effectiveAlignH }">
       <span class="text-[9px] font-medium opacity-60" :style="{ color: tpl.body }">
-        {{ design.header_text }}
+        {{ effectiveHeaderText }}
       </span>
     </div>
 
@@ -27,7 +27,7 @@
 
     <!-- Content -->
     <div class="absolute inset-0 z-10 flex flex-col" :style="contentWrapStyle">
-      <div class="w-full" :style="{ textAlign: design.align_h }">
+      <div class="w-full" :style="{ textAlign: effectiveAlignH }">
         <div class="font-bold leading-tight mb-2"
           :style="titleStyle">
           {{ slide?.title || 'Slide Title' }}
@@ -44,11 +44,11 @@
     </div>
 
     <!-- Footer -->
-    <div v-if="design.show_footer && design.footer_text"
+    <div v-if="effectiveShowFooter && effectiveFooterText"
       class="absolute bottom-0 left-0 right-0 z-20 px-4 pb-3"
-      :style="{ textAlign: design.align_h }">
+      :style="{ textAlign: effectiveAlignH }">
       <span class="text-[9px] font-medium opacity-60" :style="{ color: tpl.body }">
-        {{ design.footer_text }}
+        {{ effectiveFooterText }}
       </span>
     </div>
   </div>
@@ -77,16 +77,25 @@ const TEMPLATES = {
   powerful: { bg: "#09090b", title: "#fafafa", body: "#a1a1aa", accent: "#ef4444", font: "'Space Mono', 'Courier New', monospace" },
 } as const
 
-const tpl = computed(() => TEMPLATES[props.design.template as keyof typeof TEMPLATES] || TEMPLATES.classic)
-
 // Merge per-slide overrides over carousel design
 const ov = computed(() => props.slide?.overrides ?? {})
-const effectiveBgColor  = computed(() => (ov.value.bg_color    ?? null) || props.design.bg_color || tpl.value.bg)
-const effectiveBgImage  = computed(() => (ov.value.bg_image_url ?? null) || props.design.bg_image_url || null)
-const effectiveDarkening = computed(() =>
-  ov.value.darkening != null ? ov.value.darkening : props.design.darkening
-)
-const effectiveAccent = computed(() => props.design.accent_color || tpl.value.accent)
+
+// Template: slide override > carousel design
+const effectiveTemplate = computed(() => (ov.value.template ?? null) || props.design.template)
+const tpl = computed(() => TEMPLATES[effectiveTemplate.value as keyof typeof TEMPLATES] || TEMPLATES.classic)
+
+const effectiveBgColor        = computed(() => (ov.value.bg_color ?? null) || props.design.bg_color || tpl.value.bg)
+const effectiveBgImage        = computed(() => (ov.value.bg_image_url ?? null) || props.design.bg_image_url || null)
+const effectiveDarkening      = computed(() => ov.value.darkening != null ? ov.value.darkening : props.design.darkening)
+const effectiveAccent         = computed(() => ov.value.accent_color ?? props.design.accent_color ?? tpl.value.accent)
+const effectiveTitleHighlight = computed(() => "title_highlight" in ov.value ? (ov.value.title_highlight ?? null) : (props.design.title_highlight ?? null))
+const effectiveAlignH         = computed(() => ov.value.align_h ?? props.design.align_h)
+const effectiveAlignV         = computed(() => ov.value.align_v ?? props.design.align_v)
+const effectivePadding        = computed(() => ov.value.padding != null ? ov.value.padding : props.design.padding)
+const effectiveShowHeader     = computed(() => ov.value.show_header != null ? ov.value.show_header : props.design.show_header)
+const effectiveHeaderText     = computed(() => ov.value.header_text != null ? ov.value.header_text : props.design.header_text)
+const effectiveShowFooter     = computed(() => ov.value.show_footer != null ? ov.value.show_footer : props.design.show_footer)
+const effectiveFooterText     = computed(() => ov.value.footer_text != null ? ov.value.footer_text : props.design.footer_text)
 
 const titleFont = computed(() => {
   const key = props.design.title_font ?? "system"
@@ -134,17 +143,19 @@ function buildPatternSvg(pattern: string, color: string, opacity: number): strin
     case "cells":
       return `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20h40M20 0v40' stroke='${c}' stroke-opacity='${o}' stroke-width='0.8'/%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3C/svg%3E")`
     case "blobs":
-      return `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cellipse cx='15' cy='15' rx='10' ry='8' fill='${c}' fill-opacity='${o}'/%3E%3Cellipse cx='45' cy='40' rx='12' ry='9' fill='${c}' fill-opacity='${o}'/%3E%3Cellipse cx='10' cy='45' rx='7' ry='6' fill='${c}' fill-opacity='${o}'/%3E%3C/svg%3E")`
+      return `url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 14c7 -3 16 1 18 8s-3 16 -10 19s-16 -1 -18 -9s3 -15 10 -18z' fill='${c}' fill-opacity='${o}'/%3E%3Cpath d='M85 52c8 2 14 10 12 18s-11 13 -19 11s-13 -11 -11 -19s10 -12 18 -10z' fill='${c}' fill-opacity='${o}'/%3E%3Cpath d='M22 82c6 -4 15 -2 19 5s1 16 -6 20s-15 1 -19 -6s0 -15 6 -19z' fill='${c}' fill-opacity='${o}'/%3E%3Cpath d='M95 10c5 3 7 10 4 16s-10 9 -16 6s-7 -10 -4 -16s10 -9 16 -6z' fill='${c}' fill-opacity='${o}'/%3E%3Cpath d='M58 90c6 -2 12 3 13 9s-3 12 -9 13s-12 -3 -13 -10s3 -10 9 -12z' fill='${c}' fill-opacity='${o}'/%3E%3C/svg%3E")`
     default:
       return ""
   }
 }
 
 const patternStyle = computed(() => {
-  const p = props.design.pattern ?? "none"
+  const p = ov.value.pattern ?? props.design.pattern ?? "none"
   if (p === "none") return {}
+  const color   = ov.value.pattern_color   ?? props.design.pattern_color   ?? "#000000"
+  const opacity = ov.value.pattern_opacity ?? props.design.pattern_opacity ?? 0.06
   return {
-    backgroundImage: buildPatternSvg(p, props.design.pattern_color ?? "#000000", props.design.pattern_opacity ?? 0.06),
+    backgroundImage: buildPatternSvg(p, color, opacity),
     backgroundRepeat: "repeat",
   }
 })
@@ -155,8 +166,8 @@ const titleStyle = computed(() => {
     fontSize: titleSize.value,
     fontFamily: titleFont.value,
   }
-  if (props.design.title_highlight) {
-    s.backgroundColor = props.design.title_highlight
+  if (effectiveTitleHighlight.value) {
+    s.backgroundColor = effectiveTitleHighlight.value
     s.padding = props.small ? "0 2px" : "0 6px"
     s.borderRadius = "3px"
     s.display = "inline"
@@ -169,9 +180,9 @@ const justifyMap: Record<string, string> = { left: "flex-start", center: "center
 const alignMap: Record<string, string>   = { top: "flex-start", center: "center", bottom: "flex-end" }
 
 const contentWrapStyle = computed(() => ({
-  padding: props.small ? "8px" : `${props.design.padding}px`,
-  justifyContent: alignMap[props.design.align_v] || "center",
-  alignItems: justifyMap[props.design.align_h] || "center",
+  padding: props.small ? "8px" : `${effectivePadding.value}px`,
+  justifyContent: alignMap[effectiveAlignV.value] || "center",
+  alignItems: justifyMap[effectiveAlignH.value] || "center",
 }))
 
 const titleSize = computed(() => props.small ? "0.55rem" : "1.05rem")

@@ -2,6 +2,7 @@ import io
 import zipfile
 import uuid
 import base64
+from html import escape as _esc
 from pathlib import Path
 from typing import Optional
 
@@ -154,7 +155,11 @@ def _internalize_url(url: Optional[str]) -> Optional[str]:
 
 
 def build_slide_html(slide, design: dict, slide_number: int, total: int, width: int = 1080, height: int = 1350) -> str:
-    template_name = design.get("template", "classic")
+    # Per-slide overrides take precedence over carousel-level design
+    overrides: dict = getattr(slide, "overrides", None) or {}
+
+    # Resolve template (slide override > carousel design)
+    template_name = overrides.get("template") or design.get("template", "classic")
     tpl = TEMPLATES.get(template_name, TEMPLATES["classic"])
 
     title_font_key = design.get("title_font", "system")
@@ -163,25 +168,23 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
     title_font_family = tpl["font_family"] if title_font_key == "system" else FONT_FAMILIES.get(title_font_key, tpl["font_family"])
     body_font_family = tpl["font_family"] if body_font_key == "system" else FONT_FAMILIES.get(body_font_key, tpl["font_family"])
 
-    # Per-slide overrides take precedence over carousel-level design
-    overrides: dict = getattr(slide, "overrides", None) or {}
     bg_color = overrides.get("bg_color") or design.get("bg_color", tpl["bg"])
     # Internalize image URLs for Playwright (which runs inside Docker and uses minio:9000)
     raw_bg_image = overrides.get("bg_image_url") or design.get("bg_image_url")
     bg_image_url = _internalize_url(raw_bg_image)
     darkening = overrides["darkening"] if "darkening" in overrides else design.get("darkening", 0.0)
-    padding = design.get("padding", 40)
-    align_h = design.get("align_h", "center")
-    align_v = design.get("align_v", "center")
-    show_header = design.get("show_header", False)
-    header_text = design.get("header_text", "")
-    show_footer = design.get("show_footer", False)
-    footer_text = design.get("footer_text", "")
-    accent_color = design.get("accent_color") or tpl["accent_color"]
-    pattern = design.get("pattern", "none")
-    pattern_color = design.get("pattern_color", "#000000")
-    pattern_opacity = design.get("pattern_opacity", 0.06)
-    title_highlight = design.get("title_highlight")
+    padding = overrides["padding"] if "padding" in overrides and overrides["padding"] is not None else design.get("padding", 40)
+    align_h = overrides.get("align_h") or design.get("align_h", "center")
+    align_v = overrides.get("align_v") or design.get("align_v", "center")
+    show_header = overrides["show_header"] if "show_header" in overrides and overrides["show_header"] is not None else design.get("show_header", False)
+    header_text = overrides.get("header_text") if overrides.get("header_text") is not None else design.get("header_text", "")
+    show_footer = overrides["show_footer"] if "show_footer" in overrides and overrides["show_footer"] is not None else design.get("show_footer", False)
+    footer_text = overrides.get("footer_text") if overrides.get("footer_text") is not None else design.get("footer_text", "")
+    accent_color = overrides.get("accent_color") or design.get("accent_color") or tpl["accent_color"]
+    pattern = overrides.get("pattern") or design.get("pattern", "none")
+    pattern_color = overrides.get("pattern_color") or design.get("pattern_color", "#000000")
+    pattern_opacity = overrides["pattern_opacity"] if "pattern_opacity" in overrides else design.get("pattern_opacity", 0.06)
+    title_highlight = overrides.get("title_highlight") if "title_highlight" in overrides else design.get("title_highlight")
 
     justify_map = {"left": "flex-start", "center": "center", "right": "flex-end"}
     align_map = {"top": "flex-start", "center": "center", "bottom": "flex-end"}
@@ -204,7 +207,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             "grid":  f"<svg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path d='M24 0H0v1h24V0zm0 23H0v1h24v-1zM1 0v24h1V0H1zm22 0v24h1V0h-1z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/></svg>",
             "lines": f"<svg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'><line x1='0' y1='10' x2='20' y2='10' stroke='{pattern_color}' stroke-opacity='{pattern_opacity}' stroke-width='1'/></svg>",
             "cells": f"<svg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'><path d='M0 20h40M20 0v40' stroke='{pattern_color}' stroke-opacity='{pattern_opacity}' stroke-width='0.8'/></svg>",
-            "blobs": f"<svg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'><ellipse cx='15' cy='15' rx='10' ry='8' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><ellipse cx='45' cy='40' rx='12' ry='9' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><ellipse cx='10' cy='45' rx='7' ry='6' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/></svg>",
+            "blobs": f"<svg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'><path d='M28 14c7 -3 16 1 18 8s-3 16 -10 19s-16 -1 -18 -9s3 -15 10 -18z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M85 52c8 2 14 10 12 18s-11 13 -19 11s-13 -11 -11 -19s10 -12 18 -10z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M22 82c6 -4 15 -2 19 5s1 16 -6 20s-15 1 -19 -6s0 -15 6 -19z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M95 10c5 3 7 10 4 16s-10 9 -16 6s-7 -10 -4 -16s10 -9 16 -6z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M58 90c6 -2 12 3 13 9s-3 12 -9 13s-12 -3 -13 -10s3 -10 9 -12z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/></svg>",
         }
         if pattern in svg_map:
             import base64 as _b64
@@ -224,7 +227,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             color: {tpl['footer_color']};
             text-align: {text_align_map[align_h]};
             z-index: 10;
-        ">{header_text}</div>"""
+        ">{_esc(header_text)}</div>"""
 
     footer_html = ""
     if show_footer and footer_text:
@@ -239,7 +242,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             color: {tpl['footer_color']};
             text-align: {text_align_map[align_h]};
             z-index: 10;
-        ">{footer_text}</div>"""
+        ">{_esc(footer_text)}</div>"""
 
     slide_counter = f"""
     <div style="
@@ -261,7 +264,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             font-size: 26px;
             color: {accent_color};
             font-weight: bold;
-        ">{slide.footer_cta}</div>"""
+        ">{_esc(slide.footer_cta)}</div>"""
 
     title_style = f"font-family: {title_font_family}; font-size: {tpl['title_size']}; font-weight: bold; color: {tpl['title_color']}; line-height: 1.2; margin-bottom: 32px;"
     if title_highlight:
@@ -300,13 +303,13 @@ body {{ width: {width}px; height: {height}px; overflow: hidden; }}
     text-align: {text_align_map[align_h]};
     max-width: 960px;
 ">
-    <div style="{title_style}">{slide.title}</div>
+    <div style="{title_style}">{_esc(slide.title)}</div>
     <div style="
         font-family: {body_font_family};
         font-size: {tpl['body_size']};
         color: {tpl['body_color']};
         line-height: 1.6;
-    ">{slide.body}</div>
+    ">{_esc(slide.body)}</div>
     {footer_cta_html}
 </div>
 {footer_html}
@@ -328,7 +331,7 @@ async def render_slides_to_zip(carousel, slides: list) -> str:
         page = await browser.new_page(viewport={"width": w, "height": h})
         for i, slide in enumerate(slides):
             html = build_slide_html(slide, design, i + 1, len(slides), width=w, height=h)
-            await page.set_content(html, wait_until="networkidle")
+            await page.set_content(html, wait_until="load")
             png_bytes = await page.screenshot(type="png", clip={"x": 0, "y": 0, "width": w, "height": h})
             png_buffers.append(png_bytes)
         await browser.close()
@@ -355,7 +358,7 @@ async def render_slides_to_zip(carousel, slides: list) -> str:
         url = await s3.generate_presigned_url(
             "get_object",
             Params={"Bucket": settings.minio_bucket, "Key": key},
-            ExpiresIn=3600,
+            ExpiresIn=86400,  # 24 hours
         )
 
     return url

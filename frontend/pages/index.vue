@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Carousel } from "~/types"
+import type { Carousel, Slide } from "~/types"
 
 const { fetchCarousels } = useCarousels()
 const { startGeneration, pollGeneration } = useGeneration()
@@ -93,7 +93,7 @@ const config = useRuntimeConfig()
 
 const loading = ref(true)
 const carousels = ref<Carousel[]>([])
-const firstSlides = ref<Record<string, any>>({})
+const firstSlides = ref<Record<string, Slide>>({})
 
 const load = async () => {
   try {

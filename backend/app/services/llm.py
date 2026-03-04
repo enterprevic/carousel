@@ -85,6 +85,8 @@ Output ONLY the JSON array, no markdown, no explanation."""
 
             try:
                 parsed = json.loads(raw)
+                if not isinstance(parsed, list) or len(parsed) != slides_count:
+                    raise ValueError(f"Expected {slides_count} slides, got {len(parsed) if isinstance(parsed, list) else type(parsed).__name__}")
                 slides = [SlideGeneratedItem(**item) for item in parsed]
                 return slides, tokens_used
             except Exception as e:

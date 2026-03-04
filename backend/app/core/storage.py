@@ -1,6 +1,9 @@
+import logging
 import aioboto3
 from botocore.config import Config
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 _session = aioboto3.Session(
     aws_access_key_id=settings.minio_access_key,
@@ -31,7 +34,8 @@ async def ensure_bucket():
     async with get_s3_client() as s3:
         try:
             await s3.head_bucket(Bucket=settings.minio_bucket)
-        except Exception:
+        except Exception as e:
+            logger.info("Bucket %s not found (%s), creating…", settings.minio_bucket, e)
             await s3.create_bucket(Bucket=settings.minio_bucket)
             await s3.put_bucket_policy(
                 Bucket=settings.minio_bucket,
