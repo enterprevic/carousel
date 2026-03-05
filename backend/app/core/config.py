@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
 
+    # JWT auth
+    jwt_secret: str = ""
+    jwt_expire_hours: int = 72
+
     # LLM (OpenAI-compatible)
     llm_api_key: str = ""
     llm_base_url: str = "https://api.groq.com/openai/v1/chat/completions"

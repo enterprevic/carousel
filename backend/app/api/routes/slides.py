@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
+from app.api.deps import require_auth
 from app.models.slide import Slide
 from app.models.carousel import Carousel
 from app.schemas.slide import SlideUpdate, SlideRead
@@ -13,9 +14,13 @@ router = APIRouter(prefix="/carousels", tags=["slides"])
 
 
 @router.get("/{carousel_id}/slides", response_model=list[SlideRead])
-async def list_slides(carousel_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def list_slides(
+    carousel_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
+):
     c = await db.get(Carousel, carousel_id)
-    if not c:
+    if not c or c.user_id != user_id:
         raise HTTPException(404, "Carousel not found")
     result = await db.execute(
         select(Slide).where(Slide.carousel_id == carousel_id).order_by(Slide.order)
@@ -29,7 +34,11 @@ async def update_slide(
     slide_id: uuid.UUID,
     body: SlideUpdate,
     db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
 ):
+    c = await db.get(Carousel, carousel_id)
+    if not c or c.user_id != user_id:
+        raise HTTPException(404, "Carousel not found")
     result = await db.execute(
         select(Slide).where(Slide.id == slide_id, Slide.carousel_id == carousel_id)
     )
@@ -48,3 +57,60 @@ async def update_slide(
     await db.commit()
     await db.refresh(slide)
     return slide
+
+
+@router.delete("/{carousel_id}/slides/{slide_id}", status_code=204)
+async def delete_slide(
+    carousel_id: uuid.UUID,
+    slide_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
+):
+    c = await db.get(Carousel, carousel_id)
+    if not c or c.user_id != user_id:
+        raise HTTPException(404, "Carousel not found")
+    result = await db.execute(
+        select(Slide).where(Slide.id == slide_id, Slide.carousel_id == carousel_id)
+    )
+    slide = result.scalar_one_or_none()
+    if not slide:
+        raise HTTPException(404, "Slide not found")
+    await db.delete(slide)
+    # Reorder remaining slides
+    remaining = await db.execute(
+        select(Slide).where(Slide.carousel_id == carousel_id).order_by(Slide.order)
+    )
+    for i, s in enumerate(remaining.scalars().all()):
+        s.order = i
+    await db.commit()
+
+
+@router.patch("/{carousel_id}/slides/{slide_id}/order", response_model=list[SlideRead])
+async def move_slide(
+    carousel_id: uuid.UUID,
+    slide_id: uuid.UUID,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
+):
+    """Move a slide to a new position. body: {"new_order": int}"""
+    c = await db.get(Carousel, carousel_id)
+    if not c or c.user_id != user_id:
+        raise HTTPException(404, "Carousel not found")
+    result = await db.execute(
+        select(Slide).where(Slide.carousel_id == carousel_id).order_by(Slide.order)
+    )
+    all_slides = list(result.scalars().all())
+    slide = next((s for s in all_slides if s.id == slide_id), None)
+    if not slide:
+        raise HTTPException(404, "Slide not found")
+    new_order = max(0, min(int(body.get("new_order", 0)), len(all_slides) - 1))
+    all_slides.remove(slide)
+    all_slides.insert(new_order, slide)
+    for i, s in enumerate(all_slides):
+        s.order = i
+        s.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    for s in all_slides:
+        await db.refresh(s)
+    return all_slides

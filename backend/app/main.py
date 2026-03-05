@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.storage import ensure_bucket
+from app.api import auth as auth_routes
 from app.api.routes import carousels, slides, generations, exports, assets
+from app.models import user as _user_model  # noqa: F401 — ensures User is in metadata for Alembic
 
 
 @asynccontextmanager
@@ -23,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_routes.router)
 app.include_router(carousels.router)
 app.include_router(slides.router)
 app.include_router(generations.router)

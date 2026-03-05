@@ -1,8 +1,8 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
 
 WORKDIR /app
 
-# System deps for Playwright
+# System deps for Playwright — cached as a separate layer
 RUN apt-get update && apt-get install -y \
     wget gnupg curl \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
@@ -11,11 +11,13 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
+# Install playwright package alone first so browser download is cached independently
+RUN pip install --no-cache-dir playwright==1.49.0
+RUN playwright install chromium
+
+# Now install the rest of the dependencies (changes here won't bust the Chromium layer)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Playwright browsers
-RUN playwright install chromium
 
 COPY . .
 

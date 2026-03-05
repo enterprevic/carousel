@@ -64,7 +64,6 @@ const props = defineProps<{
   slideNumber?: number
   totalSlides?: number
   showCounter?: boolean
-  small?: boolean
 }>()
 
 const TEMPLATES = {
@@ -168,7 +167,7 @@ const titleStyle = computed(() => {
   }
   if (effectiveTitleHighlight.value) {
     s.backgroundColor = effectiveTitleHighlight.value
-    s.padding = props.small ? "0 2px" : "0 6px"
+    s.padding = "0 6px"
     s.borderRadius = "3px"
     s.display = "inline"
     s.boxDecorationBreak = "clone"
@@ -180,11 +179,11 @@ const justifyMap: Record<string, string> = { left: "flex-start", center: "center
 const alignMap: Record<string, string>   = { top: "flex-start", center: "center", bottom: "flex-end" }
 
 const contentWrapStyle = computed(() => ({
-  padding: props.small ? "8px" : `${effectivePadding.value}px`,
+  padding: `${effectivePadding.value}px`,
   justifyContent: alignMap[effectiveAlignV.value] || "center",
   alignItems: justifyMap[effectiveAlignH.value] || "center",
 }))
 
-const titleSize = computed(() => props.small ? "0.55rem" : "1.05rem")
-const bodySize  = computed(() => props.small ? "0.45rem" : "0.8rem")
+const titleSize = computed(() => "1.05rem")
+const bodySize  = computed(() => "0.8rem")
 </script>

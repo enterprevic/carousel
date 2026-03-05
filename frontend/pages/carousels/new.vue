@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-[#fbfbfd]/90 backdrop-blur-xl border-b border-black/[0.06]">
       <div class="max-w-2xl mx-auto px-5 h-14 flex items-center gap-3">
-        <NuxtLink to="/" class="w-8 h-8 rounded-xl flex items-center justify-center
+        <NuxtLink to="/dashboard" class="w-8 h-8 rounded-xl flex items-center justify-center
           text-[#3a3a3c] hover:bg-black/5 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
