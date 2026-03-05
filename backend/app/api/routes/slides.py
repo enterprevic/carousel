@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.api.deps import require_auth
 from app.models.slide import Slide
 from app.models.carousel import Carousel
-from app.schemas.slide import SlideUpdate, SlideRead
+from app.schemas.slide import SlideUpdate, SlideRead, SlideMoveBody
 
 router = APIRouter(prefix="/carousels", tags=["slides"])
 
@@ -89,11 +89,11 @@ async def delete_slide(
 async def move_slide(
     carousel_id: uuid.UUID,
     slide_id: uuid.UUID,
-    body: dict,
+    body: SlideMoveBody,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(require_auth),
 ):
-    """Move a slide to a new position. body: {"new_order": int}"""
+    """Move a slide to a new position."""
     c = await db.get(Carousel, carousel_id)
     if not c or c.user_id != user_id:
         raise HTTPException(404, "Carousel not found")
@@ -104,13 +104,12 @@ async def move_slide(
     slide = next((s for s in all_slides if s.id == slide_id), None)
     if not slide:
         raise HTTPException(404, "Slide not found")
-    new_order = max(0, min(int(body.get("new_order", 0)), len(all_slides) - 1))
+    new_order = max(0, min(body.new_order, len(all_slides) - 1))
     all_slides.remove(slide)
     all_slides.insert(new_order, slide)
+    now = datetime.now(timezone.utc)
     for i, s in enumerate(all_slides):
         s.order = i
-        s.updated_at = datetime.now(timezone.utc)
+        s.updated_at = now
     await db.commit()
-    for s in all_slides:
-        await db.refresh(s)
     return all_slides

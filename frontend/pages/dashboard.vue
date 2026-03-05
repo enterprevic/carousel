@@ -112,14 +112,14 @@
             <h1 class="text-[22px] font-bold tracking-tight text-[#1c1c1e]">My Carousels</h1>
           </div>
           <!-- Stats pills -->
-          <div class="flex items-center gap-2 text-xs">
-            <span class="px-2.5 py-1 rounded-full bg-white border border-[#e5e5ea] text-[#3a3a3c] font-medium">
+          <div class="flex items-center gap-1.5 sm:gap-2 text-xs flex-wrap justify-end">
+            <span class="px-2 sm:px-2.5 py-1 rounded-full bg-white border border-[#e5e5ea] text-[#3a3a3c] font-medium whitespace-nowrap">
               {{ stats.total }} total
             </span>
-            <span v-if="stats.ready > 0" class="px-2.5 py-1 rounded-full bg-[#34c759]/10 text-[#1a7f37] font-medium">
+            <span v-if="stats.ready > 0" class="px-2 sm:px-2.5 py-1 rounded-full bg-[#34c759]/10 text-[#1a7f37] font-medium whitespace-nowrap">
               {{ stats.ready }} ready
             </span>
-            <span v-if="stats.draft > 0" class="px-2.5 py-1 rounded-full bg-[#f2f2f7] text-[#8e8e93] font-medium">
+            <span v-if="stats.draft > 0" class="px-2 sm:px-2.5 py-1 rounded-full bg-[#f2f2f7] text-[#8e8e93] font-medium whitespace-nowrap">
               {{ stats.draft }} draft
             </span>
           </div>
@@ -227,16 +227,30 @@ const handleDelete = async (carouselId: string) => {
   }
 }
 
+// Poll only carousels that were already generating when the page loaded.
+// Carousels where generation is triggered from this page use SSE via handleGenerate.
 let pollInterval: ReturnType<typeof setInterval> | null = null
+
+const pollStaleGenerating = async () => {
+  const generating = carousels.value.filter((c) => c.status === "generating")
+  if (generating.length === 0) {
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
+    return
+  }
+  await Promise.all(generating.map(async (c) => {
+    try {
+      const updated = await $fetch<Carousel>(`${config.public.apiBase}/carousels/${c.id}`, { headers: authHeaders() })
+      const idx = carousels.value.findIndex((x) => x.id === c.id)
+      if (idx !== -1 && updated.status !== "generating") carousels.value[idx] = updated
+    } catch {}
+  }))
+}
 
 onMounted(async () => {
   await load()
-  pollInterval = setInterval(async () => {
-    if (carousels.value.some((c) => c.status === "generating")) {
-      const data = await fetchCarousels()
-      carousels.value = data
-    }
-  }, 5000)
+  if (carousels.value.some((c) => c.status === "generating")) {
+    pollInterval = setInterval(pollStaleGenerating, 4000)
+  }
 })
 
 onUnmounted(() => { if (pollInterval) clearInterval(pollInterval) })

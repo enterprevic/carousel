@@ -1,8 +1,6 @@
 import uuid
 import jwt
 from fastapi import Header, HTTPException, status
-from app.core.database import get_db  # noqa: F401 — re-exported
-from app.core.config import settings
 
 
 async def require_auth(authorization: str = Header(default="")) -> uuid.UUID:
@@ -16,9 +14,3 @@ async def require_auth(authorization: str = Header(default="")) -> uuid.UUID:
         except (jwt.PyJWTError, KeyError, ValueError):
             pass
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
-
-
-# Alias for backward compat
-require_api_key = require_auth
-
-__all__ = ["get_db", "require_auth", "require_api_key"]

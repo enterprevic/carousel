@@ -40,6 +40,40 @@
         </div>
       </div>
 
+      <!-- Usage stats -->
+      <div class="card p-6">
+        <h2 class="font-semibold text-[#1c1c1e] mb-4">Usage</h2>
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Carousels -->
+          <div class="rounded-xl bg-[#f5f5f7] px-4 py-4 text-center">
+            <p v-if="stats" class="text-[26px] font-black text-[#0071e3] tracking-tight leading-none">
+              {{ stats.carousels }}
+            </p>
+            <div v-else class="h-7 w-10 bg-[#e5e5ea] rounded-lg animate-pulse mx-auto mb-1" />
+            <p class="text-[11px] text-[#6e6e73] mt-1.5 font-medium">carousels</p>
+          </div>
+          <!-- Generations -->
+          <div class="rounded-xl bg-[#f5f5f7] px-4 py-4 text-center">
+            <p v-if="stats" class="text-[26px] font-black text-[#5856d6] tracking-tight leading-none">
+              {{ stats.generations }}
+            </p>
+            <div v-else class="h-7 w-10 bg-[#e5e5ea] rounded-lg animate-pulse mx-auto mb-1" />
+            <p class="text-[11px] text-[#6e6e73] mt-1.5 font-medium">generations</p>
+          </div>
+          <!-- Tokens -->
+          <div class="rounded-xl bg-[#f5f5f7] px-4 py-4 text-center">
+            <p v-if="stats" class="text-[26px] font-black text-[#ff9500] tracking-tight leading-none">
+              {{ formatTokens(stats.tokens_used) }}
+            </p>
+            <div v-else class="h-7 w-12 bg-[#e5e5ea] rounded-lg animate-pulse mx-auto mb-1" />
+            <p class="text-[11px] text-[#6e6e73] mt-1.5 font-medium">tokens used</p>
+          </div>
+        </div>
+        <p v-if="stats" class="text-[11px] text-[#aeaeb2] mt-3 text-center">
+          ~{{ formatTokens(stats.tokens_used) }} tokens · approx ${{ approxCost(stats.tokens_used) }} at Groq free tier
+        </p>
+      </div>
+
       <!-- Change password -->
       <div class="card p-6">
         <h2 class="font-semibold text-[#1c1c1e] mb-4">Change Password</h2>
@@ -98,9 +132,27 @@ const joinDate = computed(() => {
   return new Date(user.value.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
 })
 
+interface Stats { carousels: number; generations: number; tokens_used: number }
+const stats = ref<Stats | null>(null)
+
+const formatTokens = (n: number) => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'k'
+  return String(n)
+}
+
+// Groq free tier pricing is effectively $0 for most usage — show a minimal estimate
+// Using ~$0.05 / 1M tokens as a rough reference
+const approxCost = (n: number) => (n * 0.00000005).toFixed(4)
+
 onMounted(async () => {
   try {
-    user.value = await $fetch<UserInfo>(`${base}/auth/me`, { headers: authHeaders() })
+    const [u, s] = await Promise.all([
+      $fetch<UserInfo>(`${base}/auth/me`, { headers: authHeaders() }),
+      $fetch<Stats>(`${base}/auth/me/stats`, { headers: authHeaders() }),
+    ])
+    user.value = u
+    stats.value = s
   } catch {}
 })
 

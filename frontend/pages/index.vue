@@ -50,10 +50,10 @@
       />
 
       <div
-        class="relative max-w-4xl mx-auto px-5 sm:px-8 pt-20 pb-32 text-center"
+        class="relative max-w-4xl mx-auto px-5 sm:px-8 pt-16 sm:pt-20 pb-24 sm:pb-32 text-center"
       >
         <h1
-          class="text-[44px] sm:text-[60px] lg:text-[72px] font-bold tracking-[-0.03em] leading-[1.04] text-[#1c1c1e] mb-6"
+          class="text-[36px] sm:text-[60px] lg:text-[72px] font-bold tracking-[-0.03em] leading-[1.06] text-[#1c1c1e] mb-6"
         >
           Turn any content<br />
           into&nbsp;<span class="text-[#0071e3]"
@@ -73,7 +73,7 @@
         </h1>
 
         <p
-          class="text-[17px] sm:text-[20px] text-[#6e6e73] leading-relaxed max-w-lg mx-auto mb-12 font-normal"
+          class="text-[15px] sm:text-[20px] text-[#6e6e73] leading-relaxed max-w-lg mx-auto mb-10 sm:mb-12 font-normal"
         >
           Paste text, a YouTube link, or a URL. AI writes the slides. You style
           and export in one click.
@@ -115,14 +115,14 @@
 
         <!-- Floating slide mock-ups -->
         <div
-          class="mt-20 relative h-[320px] sm:h-[400px] select-none pointer-events-none"
+          class="mt-16 sm:mt-20 relative h-[260px] sm:h-[400px] select-none pointer-events-none"
         >
           <!-- Centre card -->
           <div
-            class="absolute left-1/2 -translate-x-1/2 bottom-0 w-[180px] sm:w-[220px] z-20"
+            class="absolute left-1/2 -translate-x-1/2 bottom-0 w-[150px] sm:w-[220px] z-20"
           >
             <div
-              class="slide-mock bg-gradient-to-br from-[#0071e3] to-[#5856d6] rounded-2xl shadow-2xl shadow-[#0071e3]/25 p-5 flex flex-col justify-between"
+              class="slide-mock bg-gradient-to-br from-[#0071e3] to-[#5856d6] rounded-2xl shadow-2xl shadow-[#0071e3]/25 p-4 sm:p-5 flex flex-col justify-between"
               style="aspect-ratio: 4/5"
             >
               <div>
@@ -138,10 +138,10 @@
           </div>
           <!-- Left card -->
           <div
-            class="absolute left-1/2 -translate-x-[calc(50%+110px)] sm:-translate-x-[calc(50%+140px)] bottom-8 w-[150px] sm:w-[185px] z-10 rotate-[-8deg]"
+            class="absolute left-1/2 -translate-x-[calc(50%+90px)] sm:-translate-x-[calc(50%+140px)] bottom-8 w-[120px] sm:w-[185px] z-10 rotate-[-8deg]"
           >
             <div
-              class="slide-mock bg-white border border-black/[0.08] rounded-2xl shadow-xl p-4 flex flex-col justify-between"
+              class="slide-mock bg-white border border-black/[0.08] rounded-2xl shadow-xl p-3 sm:p-4 flex flex-col justify-between"
               style="aspect-ratio: 4/5"
             >
               <div>
@@ -156,10 +156,10 @@
           </div>
           <!-- Right card -->
           <div
-            class="absolute left-1/2 translate-x-[calc(-50%+110px)] sm:translate-x-[calc(-50%+140px)] bottom-8 w-[150px] sm:w-[185px] z-10 rotate-[8deg]"
+            class="absolute left-1/2 translate-x-[calc(-50%+90px)] sm:translate-x-[calc(-50%+140px)] bottom-8 w-[120px] sm:w-[185px] z-10 rotate-[8deg]"
           >
             <div
-              class="slide-mock bg-gradient-to-br from-[#ff9500] to-[#ff6b00] rounded-2xl shadow-xl p-4 flex flex-col justify-between"
+              class="slide-mock bg-gradient-to-br from-[#ff9500] to-[#ff6b00] rounded-2xl shadow-xl p-3 sm:p-4 flex flex-col justify-between"
               style="aspect-ratio: 4/5"
             >
               <div>
@@ -778,17 +778,17 @@
 
         <!-- Stats strip -->
         <div class="mt-4 grid grid-cols-3 divide-x divide-black/[0.06] rounded-2xl bg-white border border-black/[0.06] shadow-[0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05)]">
-          <div class="px-8 py-6 text-center">
-            <p class="text-[32px] font-black text-[#0071e3] tracking-tight leading-none">500+</p>
-            <p class="text-[12px] text-[#6e6e73] mt-2 font-medium">carousels created</p>
+          <div class="px-3 sm:px-8 py-5 sm:py-6 text-center">
+            <p class="text-[24px] sm:text-[32px] font-black text-[#0071e3] tracking-tight leading-none">500+</p>
+            <p class="text-[10px] sm:text-[12px] text-[#6e6e73] mt-2 font-medium">carousels created</p>
           </div>
-          <div class="px-8 py-6 text-center">
-            <p class="text-[32px] font-black text-[#ff9500] tracking-tight leading-none">10×</p>
-            <p class="text-[12px] text-[#6e6e73] mt-2 font-medium">faster than Canva</p>
+          <div class="px-3 sm:px-8 py-5 sm:py-6 text-center">
+            <p class="text-[24px] sm:text-[32px] font-black text-[#ff9500] tracking-tight leading-none">10×</p>
+            <p class="text-[10px] sm:text-[12px] text-[#6e6e73] mt-2 font-medium">faster than Canva</p>
           </div>
-          <div class="px-8 py-6 text-center">
-            <p class="text-[32px] font-black text-[#34c759] tracking-tight leading-none">40%</p>
-            <p class="text-[12px] text-[#6e6e73] mt-2 font-medium">avg engagement lift</p>
+          <div class="px-3 sm:px-8 py-5 sm:py-6 text-center">
+            <p class="text-[24px] sm:text-[32px] font-black text-[#34c759] tracking-tight leading-none">40%</p>
+            <p class="text-[10px] sm:text-[12px] text-[#6e6e73] mt-2 font-medium">avg engagement lift</p>
           </div>
         </div>
 
@@ -798,13 +798,13 @@
     <!-- ── CTA ── -->
     <section class="bg-white py-24 px-5 sm:px-8">
       <div class="max-w-4xl mx-auto">
-        <div class="relative rounded-3xl overflow-hidden px-8 sm:px-16 py-16 text-center" style="background: #0071e3">
+        <div class="relative rounded-3xl overflow-hidden px-6 sm:px-16 py-12 sm:py-16 text-center" style="background: #0071e3">
           <!-- Subtle radial glow inside -->
           <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse at 50% -20%, rgba(255,255,255,0.15) 0%, transparent 70%)" />
-          <h2 class="relative text-[28px] sm:text-[44px] font-bold text-white tracking-tight leading-tight mb-4">
+          <h2 class="relative text-[26px] sm:text-[44px] font-bold text-white tracking-tight leading-tight mb-4">
             Start creating carousels<br class="hidden sm:block" /> in minutes
           </h2>
-          <p class="relative text-[16px] text-white/70 mb-10 max-w-md mx-auto">
+          <p class="relative text-[15px] sm:text-[16px] text-white/70 mb-8 sm:mb-10 max-w-md mx-auto">
             Free to use. No design skills required. Your first carousel is one paste away.
           </p>
           <NuxtLink

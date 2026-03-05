@@ -1,4 +1,5 @@
 import io
+import re
 import zipfile
 import uuid
 import base64
@@ -143,6 +144,40 @@ FONT_FAMILIES = {
 }
 
 
+def _render_inline_markup(text: str, accent_color: str) -> str:
+    """Mirror the frontend renderInlineMarkup: ==text== → highlight span, **text** → bold span."""
+    escaped = _esc(text)
+    # ==#bg|#fg|text== → custom-color highlight
+    escaped = re.sub(
+        r'==(#[0-9a-fA-F]{3,8})\|(#[0-9a-fA-F]{3,8})\|(.+?)==',
+        lambda m: (
+            f'<span style="background-color:{m.group(1)};color:{m.group(2)};'
+            f'border-radius:3px;padding:0 4px;'
+            f'-webkit-box-decoration-break:clone;box-decoration-break:clone;">'
+            f'{m.group(3)}</span>'
+        ),
+        escaped,
+    )
+    # ==text== → accent-color highlight
+    escaped = re.sub(
+        r'==(.+?)==',
+        lambda m: (
+            f'<span style="background-color:{accent_color};color:#fff;'
+            f'border-radius:3px;padding:0 4px;'
+            f'-webkit-box-decoration-break:clone;box-decoration-break:clone;">'
+            f'{m.group(1)}</span>'
+        ),
+        escaped,
+    )
+    # **text** → bold
+    escaped = re.sub(
+        r'\*\*(.+?)\*\*',
+        lambda m: f'<span style="font-weight:700">{m.group(1)}</span>',
+        escaped,
+    )
+    return escaped
+
+
 def _internalize_url(url: Optional[str]) -> Optional[str]:
     """Replace public MinIO host with internal docker host for server-side Playwright rendering."""
     if not url:
@@ -168,23 +203,29 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
     title_font_family = tpl["font_family"] if title_font_key == "system" else FONT_FAMILIES.get(title_font_key, tpl["font_family"])
     body_font_family = tpl["font_family"] if body_font_key == "system" else FONT_FAMILIES.get(body_font_key, tpl["font_family"])
 
-    bg_color = overrides.get("bg_color") or design.get("bg_color", tpl["bg"])
+    def _ov(key, default=None):
+        """Return override value if key is present, else design value, else default."""
+        if key in overrides:
+            return overrides[key]
+        return design.get(key, default)
+
+    bg_color = _ov("bg_color") or tpl["bg"]
     # Internalize image URLs for Playwright (which runs inside Docker and uses minio:9000)
-    raw_bg_image = overrides.get("bg_image_url") or design.get("bg_image_url")
+    raw_bg_image = _ov("bg_image_url")
     bg_image_url = _internalize_url(raw_bg_image)
-    darkening = overrides["darkening"] if "darkening" in overrides else design.get("darkening", 0.0)
-    padding = overrides["padding"] if "padding" in overrides and overrides["padding"] is not None else design.get("padding", 40)
-    align_h = overrides.get("align_h") or design.get("align_h", "center")
-    align_v = overrides.get("align_v") or design.get("align_v", "center")
-    show_header = overrides["show_header"] if "show_header" in overrides and overrides["show_header"] is not None else design.get("show_header", False)
-    header_text = overrides.get("header_text") if overrides.get("header_text") is not None else design.get("header_text", "")
-    show_footer = overrides["show_footer"] if "show_footer" in overrides and overrides["show_footer"] is not None else design.get("show_footer", False)
-    footer_text = overrides.get("footer_text") if overrides.get("footer_text") is not None else design.get("footer_text", "")
-    accent_color = overrides.get("accent_color") or design.get("accent_color") or tpl["accent_color"]
-    pattern = overrides.get("pattern") or design.get("pattern", "none")
-    pattern_color = overrides.get("pattern_color") or design.get("pattern_color", "#000000")
-    pattern_opacity = overrides["pattern_opacity"] if "pattern_opacity" in overrides else design.get("pattern_opacity", 0.06)
-    title_highlight = overrides.get("title_highlight") if "title_highlight" in overrides else design.get("title_highlight")
+    darkening = _ov("darkening", 0.0)
+    padding = _ov("padding", 40)
+    align_h = _ov("align_h") or "center"
+    align_v = _ov("align_v") or "center"
+    show_header = _ov("show_header", False)
+    header_text = _ov("header_text", "")
+    show_footer = _ov("show_footer", False)
+    footer_text = _ov("footer_text", "")
+    accent_color = _ov("accent_color") or tpl["accent_color"]
+    pattern = _ov("pattern", "none")
+    pattern_color = _ov("pattern_color", "#000000")
+    pattern_opacity = _ov("pattern_opacity", 0.06)
+    title_highlight = _ov("title_highlight")
 
     justify_map = {"left": "flex-start", "center": "center", "right": "flex-end"}
     align_map = {"top": "flex-start", "center": "center", "bottom": "flex-end"}
@@ -210,8 +251,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             "blobs": f"<svg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'><path d='M28 14c7 -3 16 1 18 8s-3 16 -10 19s-16 -1 -18 -9s3 -15 10 -18z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M85 52c8 2 14 10 12 18s-11 13 -19 11s-13 -11 -11 -19s10 -12 18 -10z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M22 82c6 -4 15 -2 19 5s1 16 -6 20s-15 1 -19 -6s0 -15 6 -19z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M95 10c5 3 7 10 4 16s-10 9 -16 6s-7 -10 -4 -16s10 -9 16 -6z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/><path d='M58 90c6 -2 12 3 13 9s-3 12 -9 13s-12 -3 -13 -10s3 -10 9 -12z' fill='{pattern_color}' fill-opacity='{pattern_opacity}'/></svg>",
         }
         if pattern in svg_map:
-            import base64 as _b64
-            svg_b64 = _b64.b64encode(svg_map[pattern].encode()).decode()
+            svg_b64 = base64.b64encode(svg_map[pattern].encode()).decode()
             pattern_overlay = f'<div style="position:absolute;inset:0;background-image:url(\'data:image/svg+xml;base64,{svg_b64}\');background-repeat:repeat;z-index:2;pointer-events:none;"></div>'
 
     header_html = ""
@@ -303,13 +343,13 @@ body {{ width: {width}px; height: {height}px; overflow: hidden; }}
     text-align: {text_align_map[align_h]};
     max-width: 960px;
 ">
-    <div style="{title_style}">{_esc(slide.title)}</div>
+    <div style="{title_style}">{_render_inline_markup(slide.title, accent_color)}</div>
     <div style="
         font-family: {body_font_family};
         font-size: {tpl['body_size']};
         color: {tpl['body_color']};
         line-height: 1.6;
-    ">{_esc(slide.body)}</div>
+    ">{_render_inline_markup(slide.body, accent_color)}</div>
     {footer_cta_html}
 </div>
 {footer_html}

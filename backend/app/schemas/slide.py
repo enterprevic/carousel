@@ -50,6 +50,10 @@ class SlideRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SlideMoveBody(BaseModel):
+    new_order: int = Field(..., ge=0)
+
+
 class SlideGeneratedItem(BaseModel):
     order: int
     title: str = Field(..., max_length=60)

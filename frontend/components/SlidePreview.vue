@@ -29,13 +29,13 @@
     <div class="absolute inset-0 z-10 flex flex-col" :style="contentWrapStyle">
       <div class="w-full" :style="{ textAlign: effectiveAlignH }">
         <div class="font-bold leading-tight mb-2"
-          :style="titleStyle">
-          {{ slide?.title || 'Slide Title' }}
-        </div>
+          data-field="title"
+          :style="titleStyle"
+          v-html="renderInlineMarkup(slide?.title || 'Slide Title', effectiveAccent)" />
         <div class="leading-relaxed"
-          :style="{ color: tpl.body, fontSize: bodySize, fontFamily: bodyFont }">
-          {{ slide?.body || 'Slide body content.' }}
-        </div>
+          data-field="body"
+          :style="{ color: tpl.body, fontSize: bodySize, fontFamily: bodyFont }"
+          v-html="renderInlineMarkup(slide?.body || 'Slide body content.', effectiveAccent)" />
         <div v-if="slide?.footer_cta" class="font-semibold mt-2"
           :style="{ color: effectiveAccent, fontSize: bodySize }">
           {{ slide.footer_cta }}
@@ -186,4 +186,16 @@ const contentWrapStyle = computed(() => ({
 
 const titleSize = computed(() => "1.05rem")
 const bodySize  = computed(() => "0.8rem")
+
+function renderInlineMarkup(text: string, accentColor: string): string {
+  if (!text) return ''
+  const escaped = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return escaped
+    .replace(/==(#[0-9a-fA-F]{3,8})\|(#[0-9a-fA-F]{3,8})\|(.+?)==/g, (_, bg, fg, m) =>
+      `<span style="background-color:${bg};color:${fg};border-radius:3px;padding:0 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;">${m}</span>`)
+    .replace(/==(.+?)==/g, (_, m) =>
+      `<span style="background-color:${accentColor};color:#fff;border-radius:3px;padding:0 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone;">${m}</span>`)
+    .replace(/\*\*(.+?)\*\*/g, (_, m) => `<span style="font-weight:700">${m}</span>`)
+}
 </script>

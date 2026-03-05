@@ -1,17 +1,20 @@
-# Carousel Generator
+# CarouselGen
 
-An Instagram carousel generator. Create carousels from text or video, configure format, generate slides with AI, edit in a visual editor, and export as PNG ZIP.
+AI-powered Instagram carousel generator. Paste text, a YouTube link, or any URL — AI writes the slides, you style and export as high-resolution PNGs.
+
+---
 
 ## Stack
 
 | Layer | Tech |
 |-------|------|
-| Backend | Python 3.12 + FastAPI + SQLAlchemy (async) + Alembic |
+| Backend | Python 3.12 + FastAPI + SQLAlchemy 2.0 (async) + Alembic |
 | Database | PostgreSQL 16 |
 | Storage | MinIO (S3-compatible) |
-| LLM | Groq API (`llama-3.3-70b-versatile`) via httpx |
-| Export | Playwright (headless Chromium → PNG) |
-| Frontend | Nuxt 3 + Vue 3 + Tailwind CSS + Pinia |
+| LLM | Any OpenAI-compatible API (Groq, OpenAI, OpenRouter, Ollama) |
+| Export | Playwright headless Chromium → PNG → ZIP |
+| Frontend | Nuxt 3 + Vue 3 + Tailwind CSS |
+| Auth | JWT + bcrypt (per-user accounts) |
 | Infra | Docker Compose |
 
 ---
@@ -20,7 +23,7 @@ An Instagram carousel generator. Create carousels from text or video, configure 
 
 ### Prerequisites
 - Docker + Docker Compose
-- Groq API key (free at [console.groq.com](https://console.groq.com))
+- An LLM API key — Groq is free at [console.groq.com](https://console.groq.com)
 
 ### 1. Clone and configure
 
@@ -28,7 +31,13 @@ An Instagram carousel generator. Create carousels from text or video, configure 
 git clone <repo>
 cd generator
 cp .env.example .env
-# Edit .env and set your LLM_API_KEY=gsk_...
+```
+
+Open `.env` and set at minimum:
+
+```env
+LLM_API_KEY=gsk_...          # your Groq key (or OpenAI / other)
+JWT_SECRET=<random string>   # openssl rand -hex 32
 ```
 
 ### 2. Start everything
@@ -37,34 +46,115 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-This will:
-- Start PostgreSQL
-- Start MinIO
-- Run Alembic migrations
-- Start FastAPI backend on **http://localhost:8000**
-- Start Nuxt frontend on **http://localhost:3000**
+Starts PostgreSQL, MinIO, runs Alembic migrations, and launches the backend (port 8000) and frontend (port 3000).
 
 ### 3. Open the app
 
-Visit **http://localhost:3000**
+Visit **[http://localhost:3000](http://localhost:3000)**, register an account, and create your first carousel.
+
+---
+
+## Features
+
+### Content Sources
+- **Text** — paste any text directly; the AI turns it into slides
+- **YouTube video** — paste a video URL; transcripts are auto-fetched (falls back to URL + notes if captions are unavailable)
+- **Links** — paste up to 5 URLs; each page is scraped to plain text and fed to the AI
+
+### AI Generation
+- Structured slide output: title, body, optional CTA per slide
+- Choose slide count (6–12), language (EN / RU / FR), and an optional style hint
+- Automatic retry on malformed JSON responses
+- Generation history — view past generation runs per carousel
+
+### Visual Editor
+- **Live slide preview** — see exactly how your slide will look as you edit
+- **Slide list sidebar** — navigate, reorder (up/down), and delete slides
+- **Inline text formatting** — select text directly on the slide preview to get a floating toolbar:
+  - **Highlight** — wraps selected text in a colored highlight span
+  - **Bold** — wraps selected text in bold
+  - **Custom highlight colors** — pick background color and text color per highlight via color swatches in the toolbar
+- **Title and body editing** with blur-to-save
+- **Optional CTA line** per slide (e.g. "Save this post ↓")
+
+### Design System
+- **7 templates**: Bright, Classic, Comic, Elegant, Minimal, Notes, Powerful
+- **Accent color** — one-click color to unify highlights, CTAs, and emphasis across all slides
+- **Background color** — per-carousel custom hex color
+- **Background image** — upload a photo for a slide background with adjustable darkening overlay
+- **8 overlay patterns**: Dots (S/M/L), Grid, Lines, Cells, Blobs — with custom color and opacity
+- **3 aspect ratios**: 4:5 (portrait), 9:16 (stories), 1:1 (square)
+- **Horizontal alignment**: left, center, right
+- **Vertical alignment**: top, center, bottom
+- **Custom padding**: 20–200 px
+- **Title font** and **body font**: 10 choices including Playfair, Oswald, Montserrat, Space Mono, Merriweather, and more
+- **Title highlight color** — highlight-box style behind the title
+- **Header / Footer text** — optional persistent text shown on every slide (e.g. @username)
+
+### Per-slide Overrides
+Any design field can be overridden on individual slides independently of the carousel-level design:
+- Background color or image
+- Template, accent color, title highlight
+- Alignment, padding
+- Pattern and overlay settings
+- Header / footer visibility and text
+
+### Export
+- **PNG export** — Playwright renders each slide at full resolution
+- Output sizes: 1080×1350 (4:5), 1080×1920 (9:16), 1080×1080 (1:1)
+- Slides packed into a ZIP archive and uploaded to MinIO
+- Inline markup (highlights, bold) renders correctly in exports
+
+### Account & Data
+- Per-user registration and login (JWT, bcrypt)
+- All carousels, slides, and assets are scoped to the authenticated user
+- Change password from the profile page
+- Usage stats: carousel count, generation count, tokens used
+
+---
+
+## LLM Configuration
+
+Configure via `.env`:
+
+| Provider | `LLM_BASE_URL` | `LLM_MODEL` |
+|----------|----------------|-------------|
+| **Groq** (default) | `https://api.groq.com/openai/v1/chat/completions` | `llama-3.3-70b-versatile` |
+| OpenAI | `https://api.openai.com/v1/chat/completions` | `gpt-4o-mini` |
+| OpenRouter | `https://openrouter.ai/api/v1/chat/completions` | `meta-llama/llama-3.1-8b-instruct:free` |
+| Ollama (local) | `http://host.docker.internal:11434/v1/chat/completions` | `llama3.2` |
 
 ---
 
 ## API Reference
 
+All endpoints (except `/auth/register`, `/auth/login`, `/health`) require:
+```
+Authorization: Bearer <token>
+```
+
+### Auth
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/auth/register` | Create account `{username, password}` → JWT |
+| `POST` | `/auth/login` | Sign in `{username, password}` → JWT |
+| `GET` | `/auth/me` | Current user info |
+| `POST` | `/auth/password` | Change password `{current_password, new_password}` |
+| `GET` | `/auth/me/stats` | Usage stats (carousels, generations, tokens) |
+
 ### Carousels
 
-#### `GET /carousels`
-List all carousels. Optional query params: `?status=draft|generating|ready|failed`, `?lang=en|ru|fr`
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/carousels` | List your carousels |
+| `POST` | `/carousels` | Create a carousel |
+| `GET` | `/carousels/{id}` | Get a single carousel |
+| `PATCH` | `/carousels/{id}` | Update title / format |
+| `PATCH` | `/carousels/{id}/design` | Update design settings |
+| `DELETE` | `/carousels/{id}` | Delete carousel and all slides |
 
-**Response:** array of carousel objects
-
-#### `GET /carousels/{id}`
-Get a single carousel.
-
-#### `POST /carousels`
-Create a new carousel.
-
+**Create carousel body:**
 ```json
 {
   "title": "5 Python Tips",
@@ -79,218 +169,143 @@ Create a new carousel.
 ```
 
 `source_type`: `text` | `video` | `links`
-`slides_count`: 6–10
-`language`: `en` | `ru` | `fr`
 
-#### `PATCH /carousels/{id}`
-Update carousel title, format, or design (partial update).
+| Source type | Payload fields | What the LLM receives |
+|-------------|----------------|-----------------------|
+| `text` | `text` | The pasted text directly |
+| `video` | `video_url`, `notes` | Auto-fetched YouTube transcript + notes; falls back to URL + notes |
+| `links` | `links[]`, `notes` | Each URL scraped to plain text (up to 5 URLs, 4000 chars each) + notes |
 
-#### `PATCH /carousels/{id}/design`
-Update only the design settings.
+### Design settings (`PATCH /carousels/{id}/design`)
 
-```json
-{
-  "template": "elegant",
-  "bg_color": "#0f172a",
-  "bg_image_url": null,
-  "darkening": 0.3,
-  "padding": 50,
-  "align_h": "left",
-  "align_v": "center",
-  "aspect_ratio": "9:16",
-  "accent_color": "#d4af37",
-  "pattern": "dots1",
-  "pattern_color": "#ffffff",
-  "pattern_opacity": 0.08,
-  "title_font": "playfair",
-  "body_font": "opensans",
-  "title_highlight": "#f97316",
-  "show_header": false,
-  "header_text": "",
-  "show_footer": true,
-  "footer_text": "Follow for more"
-}
-```
-
-| Field | Type | Values / Range | Default |
-|-------|------|----------------|---------|
+| Field | Type | Values | Default |
+|-------|------|--------|---------|
 | `template` | string | `bright` `classic` `comic` `elegant` `minimal` `notes` `powerful` | `classic` |
-| `bg_color` | string | hex color | `#ffffff` |
+| `bg_color` | string | hex | template default |
 | `bg_image_url` | string\|null | URL | `null` |
-| `darkening` | float | 0.0 – 1.0 | `0.0` |
-| `padding` | int | 20 – 80 | `40` |
+| `darkening` | float | 0.0–0.9 | `0.0` |
+| `padding` | int | 0–200 | `40` |
 | `align_h` | string | `left` `center` `right` | `center` |
 | `align_v` | string | `top` `center` `bottom` | `center` |
 | `aspect_ratio` | string | `4:5` `9:16` `1:1` | `4:5` |
-| `accent_color` | string\|null | hex color | `null` |
+| `accent_color` | string\|null | hex | template default |
+| `title_highlight` | string\|null | hex | `null` |
 | `pattern` | string | `none` `dots1` `dots2` `dots3` `grid` `lines` `cells` `blobs` | `none` |
-| `pattern_color` | string | hex color | `#000000` |
-| `pattern_opacity` | float | 0.0 – 0.5 | `0.06` |
-| `title_font` | string | `system` `playfair` `oswald` `montserrat` `opensans` `lato` `merriweather` `georgia` | `system` |
+| `pattern_color` | string | hex | `#000000` |
+| `pattern_opacity` | float | 0.0–1.0 | `0.06` |
+| `title_font` | string | `system` `playfair` `oswald` `montserrat` `opensans` `lato` `merriweather` `roboto_condensed` `jost` `fredoka` `caveat` `space_mono` | `system` |
 | `body_font` | string | same as title_font | `system` |
-| `title_highlight` | string\|null | hex color | `null` |
 | `show_header` | bool | | `false` |
 | `header_text` | string | | `""` |
 | `show_footer` | bool | | `false` |
 | `footer_text` | string | | `""` |
 
----
-
 ### Slides
 
-#### `GET /carousels/{id}/slides`
-Get all slides for a carousel (ordered).
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/carousels/{id}/slides` | List all slides (ordered) |
+| `PATCH` | `/carousels/{id}/slides/{slide_id}` | Update slide content or overrides |
+| `PATCH` | `/carousels/{id}/slides/{slide_id}/order` | Reorder a slide `{new_order}` |
+| `DELETE` | `/carousels/{id}/slides/{slide_id}` | Delete a slide |
 
-**Response:**
-```json
-[
-  {
-    "id": "...",
-    "carousel_id": "...",
-    "order": 1,
-    "title": "Slide Title",
-    "body": "Slide body text.",
-    "footer_cta": "Follow for more",
-    "overrides": {},
-    "created_at": "...",
-    "updated_at": "..."
-  }
-]
-```
-
-#### `PATCH /carousels/{id}/slides/{slide_id}`
-Update a slide's content or per-slide design overrides.
-
+**Update slide body** (all fields optional):
 ```json
 {
   "title": "New Title",
-  "body": "Updated body text.",
+  "body": "Updated body. Use ==highlighted== or **bold** inline.",
   "footer_cta": "Save this post",
   "overrides": {
     "bg_color": "#1a1a2e",
-    "bg_image_url": "http://...",
-    "darkening": 0.5
+    "template": "elegant",
+    "accent_color": "#d4af37"
   }
 }
 ```
 
-All fields optional. `overrides` fields override the carousel-level design for that slide only.
+`overrides` accepts any design field and applies it to that slide only.
 
----
+#### Inline markup
+
+Two markers are supported in `title` and `body` fields:
+
+| Syntax | Result |
+|--------|--------|
+| `==word==` | Highlight using the carousel accent color (white text) |
+| `==#rrggbb\|#rrggbb\|word==` | Highlight with custom background and text color |
+| `**word**` | Bold |
+
+These render correctly in the live preview and in PNG exports.
 
 ### Generations
 
-#### `POST /generations`
-Trigger AI slide generation for a carousel. Runs in the background.
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/generations` | Start AI generation `{carousel_id}` |
+| `GET` | `/generations/{id}` | Poll status |
+| `GET` | `/generations/{id}/stream` | SSE stream for real-time status updates |
 
-```json
-{ "carousel_id": "<id>" }
-```
-
-**Response:**
-```json
-{
-  "id": "...",
-  "carousel_id": "...",
-  "status": "queued",
-  "estimated_tokens": 650,
-  "tokens_used": null,
-  "error": null,
-  "created_at": "...",
-  "updated_at": "..."
-}
-```
-
-#### `GET /generations/{id}`
-Poll generation status.
-
-`status`: `queued` → `running` → `done` | `failed`
-
----
+Status flow: `queued` → `running` → `done` | `failed`
 
 ### Exports
 
-#### `POST /exports`
-Start a PNG export for a carousel. Runs in the background.
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/exports` | Start PNG export `{carousel_id}` |
+| `GET` | `/exports/{id}` | Poll status + get download URL |
+| `GET` | `/exports/{id}/stream` | SSE stream for real-time status updates |
 
-```json
-{ "carousel_id": "<id>" }
-```
+Status flow: `queued` → `running` → `done` | `failed`
 
-#### `GET /exports/{id}`
-Poll export status.
+On `done`, `file_url` is a presigned MinIO URL (24h TTL) pointing to a ZIP of PNG slides.
 
-```json
-{
-  "id": "...",
-  "carousel_id": "...",
-  "status": "done",
-  "file_url": "http://localhost:9000/carousel-assets/exports/.../slides.zip",
-  "created_at": "..."
-}
-```
-
-`status`: `queued` → `running` → `done` | `failed`
-`file_url` is a presigned URL valid for 1 hour.
-
----
+| Aspect Ratio | Dimensions | Use case |
+|-------------|------------|----------|
+| `4:5` | 1080×1350 px | Instagram feed portrait |
+| `9:16` | 1080×1920 px | Stories / Reels |
+| `1:1` | 1080×1080 px | Square post |
 
 ### Assets
 
-#### `POST /assets/upload`
-Upload an image to use as a slide background.
-
-```bash
-curl -X POST http://localhost:8000/assets/upload \
-  -F "file=@/path/to/image.jpg"
+```
+POST /assets/upload   multipart/form-data, field: "file"
 ```
 
-Accepted types: `jpeg`, `png`, `webp`, `gif`. Max size: 10 MB.
-
-**Response:**
-```json
-{ "url": "http://localhost:9000/carousel-assets/assets/...jpg" }
-```
+Accepted types: `jpeg`, `png`, `webp`, `gif`. Max 10 MB.
+Returns `{ "url": "..." }` — use as `bg_image_url` in design settings.
 
 ---
 
-## Full Workflow Example
+## Full Workflow (curl)
 
 ```bash
+TOKEN="Bearer <your_jwt>"
+
 # 1. Create carousel
 curl -X POST http://localhost:8000/carousels \
-  -H "Content-Type: application/json" \
-  -d '{"title":"5 Python Tips","source_type":"text","source_payload":{"text":"Python is great for automation..."},"format":{"slides_count":6,"language":"en","style_hint":"punchy and actionable"}}'
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
+  -d '{"title":"5 Python Tips","source_type":"text","source_payload":{"text":"Python is great..."},"format":{"slides_count":6,"language":"en"}}'
 # → {"id": "abc-123", ...}
 
 # 2. Generate slides
 curl -X POST http://localhost:8000/generations \
-  -H "Content-Type: application/json" \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
   -d '{"carousel_id": "abc-123"}'
-# → {"id": "gen-456", "status": "queued", ...}
+# → {"id": "gen-456", "status": "queued"}
 
 # 3. Poll until done
-curl http://localhost:8000/generations/gen-456
+curl -H "Authorization: $TOKEN" http://localhost:8000/generations/gen-456
 # → {"status": "done", "tokens_used": 712}
 
-# 4. (Optional) Update design
-curl -X PATCH http://localhost:8000/carousels/abc-123/design \
-  -H "Content-Type: application/json" \
-  -d '{"template":"powerful","aspect_ratio":"9:16","pattern":"dots1"}'
-
-# 5. Export
+# 4. Export
 curl -X POST http://localhost:8000/exports \
-  -H "Content-Type: application/json" \
+  -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
   -d '{"carousel_id": "abc-123"}'
-# → {"id": "exp-789", "status": "queued"}
 
-# 6. Poll until done
-curl http://localhost:8000/exports/exp-789
+# 5. Download ZIP
+curl -H "Authorization: $TOKEN" http://localhost:8000/exports/exp-789
 # → {"status": "done", "file_url": "http://..."}
-
-# 7. Download
 curl -L "<file_url>" -o slides.zip && unzip slides.zip
-# → slide_01.png, slide_02.png, ...
 ```
 
 ---
@@ -301,81 +316,72 @@ curl -L "<file_url>" -o slides.zip && unzip slides.zip
 generator/
 ├── backend/
 │   ├── app/
-│   │   ├── api/routes/      # carousels, slides, generations, exports, assets
-│   │   ├── core/            # config, database, storage
-│   │   ├── models/          # SQLAlchemy ORM models
-│   │   ├── schemas/         # Pydantic schemas
-│   │   └── services/        # llm.py, export_svc.py, storage_svc.py
-│   ├── alembic/             # DB migrations
+│   │   ├── api/
+│   │   │   ├── auth.py              # register, login, me, password, stats
+│   │   │   ├── deps.py              # require_auth JWT dependency
+│   │   │   └── routes/              # carousels, slides, generations, exports, assets
+│   │   ├── core/                    # config, database, storage
+│   │   ├── models/                  # User, Carousel, Slide, Generation, Export
+│   │   ├── schemas/                 # Pydantic request/response models
+│   │   └── services/
+│   │       ├── llm.py               # AI generation (text/video/links source handling)
+│   │       ├── export_svc.py        # Playwright HTML→PNG→ZIP pipeline
+│   │       └── storage_svc.py       # MinIO upload/download
+│   ├── alembic/versions/            # DB migrations
+│   ├── fonts/                       # Bundled TTF fonts for export
 │   └── requirements.txt
 ├── frontend/
-│   ├── pages/               # index, carousels/new, carousels/[id]/edit
-│   ├── components/          # CarouselCard, SlidePreview, DesignPanel, ExportButton
-│   ├── composables/         # useCarousels, useGeneration, useExport
-│   └── types/               # TypeScript interfaces
+│   ├── pages/
+│   │   ├── index.vue                # Landing page
+│   │   ├── login.vue / register.vue # Auth
+│   │   ├── dashboard.vue            # Carousel list
+│   │   ├── profile.vue              # Account settings
+│   │   └── carousels/
+│   │       ├── new.vue              # Creation wizard
+│   │       └── [id]/edit.vue        # Visual editor
+│   ├── components/
+│   │   ├── SlidePreview.vue         # Live slide renderer (v-html + inline markup)
+│   │   ├── CarouselCard.vue         # Dashboard card
+│   │   └── DesignPanel.vue          # Design controls sidebar
+│   ├── composables/                 # useAuth, useCarousels, useGeneration, useExport, useToast
+│   ├── middleware/auth.global.ts    # JWT expiry check on every route
+│   └── types/index.ts               # TypeScript interfaces + DEFAULT_DESIGN
 ├── docker-compose.yml
 └── .env.example
 ```
 
 ---
 
-## Features
+## Environment Variables
 
-### Backend
-- Async FastAPI with SQLAlchemy 2.0 (asyncpg driver)
-- Background tasks for LLM generation and export (FastAPI BackgroundTasks)
-- Slide generation via Groq `llama-3.3-70b-versatile` with JSON validation + 1 retry
-- Export: Playwright renders each slide as HTML → screenshot → PNG → ZIP → MinIO
-- Variable export dimensions based on selected aspect ratio
-- Bundled TTF fonts for consistent rendering across environments
-- MinIO for asset storage with public read policy
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `LLM_API_KEY` | Yes | — | API key for your LLM provider |
+| `JWT_SECRET` | Yes | random (resets on restart) | Secret for signing JWTs — set a stable value |
+| `LLM_BASE_URL` | No | Groq endpoint | OpenAI-compatible chat completions URL |
+| `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Model name |
+| `DATABASE_URL` | No | postgres in Docker | PostgreSQL asyncpg connection string |
+| `MINIO_PUBLIC_URL` | No | `http://localhost:9000` | Public URL for presigned download links |
+| `CORS_ORIGINS` | No | `*` | Comma-separated allowed origins |
+| `JWT_EXPIRE_HOURS` | No | `72` | Token lifetime in hours |
 
-### Frontend
-- Nuxt 3 + Vue 3 Composition API + Pinia
-- Desktop + mobile responsive layout
-- Creation wizard (3 steps: source type → content → format)
-- Visual editor with slide thumbnails, text editing, and design panel
-- Design auto-saves on change (debounced 800ms)
-- Per-slide background image and color overrides
-
-### Design Panel
-
-| Tab | Options |
-|-----|---------|
-| **Template** | 7 presets: Bright, Classic, Comic, Elegant, Minimal, Notes, Powerful |
-| **Background** | Solid color, image upload with URL, darkening overlay slider |
-| **Pattern** | 8 overlay patterns: Dots S/M/L, Grid, Lines, Cells, Blobs — with color + opacity controls |
-| **Layout** | Padding, horizontal + vertical alignment, aspect ratio (4:5 / 9:16 / 1:1) |
-| **Typography** | Title font, body font (8 choices each), accent color override, title highlight color |
-| **Header/Footer** | Toggle + text for header and footer |
-
-### Export
-
-| Aspect Ratio | Dimensions | Use Case |
-|-------------|------------|----------|
-| 4:5 | 1080×1350 px | Instagram Feed (portrait) |
-| 9:16 | 1080×1920 px | Stories / Reels |
-| 1:1 | 1080×1080 px | Square post |
-
-- Format: PNG (lossless)
-- Naming: `slide_01.png`, `slide_02.png`, …
-- Delivery: ZIP archive via presigned MinIO URL (1-hour TTL)
+> **Important:** If `JWT_SECRET` is not set, a random secret is generated per process start. All user sessions will be invalidated on every container restart.
 
 ---
 
 ## Known Limitations
 
-| Area | Limitation |
-|------|-----------|
-| **Video** | Accepts URL only; no actual video transcription (LLM uses URL + notes as context) |
-| **Export speed** | First export is slow (~30-60s) because Playwright launches Chromium. Subsequent exports are faster. |
-| **Auth** | No authentication. API is open. |
-| **Generation polling** | Frontend polls every 2s via REST. No WebSockets/SSE. |
-| **Concurrency** | BackgroundTasks runs in the same process. For production, use Celery + Redis. |
+| Area | Note |
+|------|------|
+| YouTube transcripts | Requires the video to have auto-generated or manual captions; private/age-restricted videos fall back to URL + notes |
+| URL scraping | Some sites block scrapers or require JS — content fetch may fail silently and fall back to the raw URL |
+| Export speed | First export per server start is slower while Playwright initialises Chromium |
+| Concurrency | Generation and export run as FastAPI `BackgroundTasks` (in-process); use Celery + Redis for production scale |
+| Export URL TTL | Presigned download URLs expire after 24 hours with no regeneration path |
 
 ---
 
-## Development (without Docker)
+## Local Development (without Docker)
 
 ```bash
 # Backend
@@ -384,11 +390,9 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
 
-# Set env vars
 export DATABASE_URL="postgresql+asyncpg://carousel:carousel@localhost:5432/carousel"
 export LLM_API_KEY="gsk_..."
-export MINIO_ENDPOINT="localhost:9000"
-# ... etc
+export JWT_SECRET="dev-secret"
 
 alembic upgrade head
 uvicorn app.main:app --reload --port 8000
@@ -403,7 +407,4 @@ NUXT_PUBLIC_API_BASE=http://localhost:8000 npm run dev
 
 ## MinIO Console
 
-Access the MinIO web console at **http://localhost:9001**
-
-- Username: `minioadmin`
-- Password: `minioadmin`
+**[http://localhost:9001](http://localhost:9001)** — username: `minioadmin` / password: `minioadmin`

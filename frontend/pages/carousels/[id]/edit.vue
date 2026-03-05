@@ -145,8 +145,10 @@
               <p class="text-[#8e8e93] text-sm">Generate slides to get started</p>
             </div>
             <div v-else class="w-full max-w-xs">
-              <SlidePreview :slide="activeSlide" :design="design"
-                :slide-number="activeIndex + 1" :total-slides="slides.length" :show-counter="true" />
+              <div class="relative" ref="slidePreviewRef" @mouseup="onPreviewMouseUp">
+                <SlidePreview :slide="activeSlide" :design="design"
+                  :slide-number="activeIndex + 1" :total-slides="slides.length" :show-counter="true" />
+              </div>
               <div class="mt-4 card p-5 space-y-4">
                 <div>
                   <label class="label">Title</label>
@@ -252,15 +254,14 @@
             <div class="shrink-0 bg-[#f7f7f8] border-b border-black/[0.07] overflow-x-auto">
               <div class="flex gap-2 p-2 min-w-max">
                 <button v-for="(slide, i) in slides" :key="slide.id"
-                  class="relative shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-150 w-[64px]"
+                  class="relative shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-150"
                   :class="activeIndex === i
                     ? 'border-[#0071e3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
                     : 'border-[#e5e5ea]'"
+                  :style="thumbnailScaleStyleMobile.container"
                   @click="activeIndex = i">
-                  <div class="w-full overflow-hidden">
-                    <div style="width: 320px; transform-origin: top left;" :style="thumbnailScaleStyleMobile">
-                      <SlidePreview :slide="slide" :design="design" />
-                    </div>
+                  <div :style="thumbnailScaleStyleMobile.inner">
+                    <SlidePreview :slide="slide" :design="design" />
                   </div>
                   <div class="absolute bottom-0 inset-x-0 h-4 flex items-center justify-center
                               bg-gradient-to-t from-black/60 to-transparent">
@@ -277,8 +278,10 @@
                 <p class="text-[#3a3a3c] font-medium text-sm">Generating…</p>
               </div>
               <div v-else-if="slides.length > 0" class="w-full max-w-[260px]">
-                <SlidePreview :slide="activeSlide" :design="design"
-                  :slide-number="activeIndex + 1" :total-slides="slides.length" :show-counter="true" />
+                <div class="relative" ref="slidePreviewRefMobile" @mouseup="onPreviewMouseUp">
+                  <SlidePreview :slide="activeSlide" :design="design"
+                    :slide-number="activeIndex + 1" :total-slides="slides.length" :show-counter="true" />
+                </div>
                 <div class="flex items-center justify-between mt-3">
                   <button class="btn-secondary text-xs px-3 py-1.5 gap-1"
                     :disabled="activeIndex === 0" @click="activeIndex--">
@@ -469,6 +472,49 @@
       </Transition>
     </Teleport>
 
+    <!-- Floating highlight toolbar -->
+    <Teleport to="body">
+      <div v-if="floatingToolbar.visible"
+        ref="floatingToolbarEl"
+        class="fixed z-[100] flex items-center gap-0.5 bg-[#1c1c1e]/95 backdrop-blur-sm rounded-xl shadow-xl px-1 py-1 pointer-events-auto"
+        :style="{ left: floatingToolbar.x + 'px', top: floatingToolbar.y + 'px', transform: 'translateX(-50%)' }">
+
+        <!-- Highlight color swatches -->
+        <div class="flex items-center gap-1 px-1" title="Highlight background color">
+          <div class="relative w-5 h-5 rounded cursor-pointer border border-white/20 overflow-hidden shrink-0"
+            :style="{ background: hlBgColor || accentForToolbar }">
+            <input type="color" :value="hlBgColor || accentForToolbar"
+              class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              @input="hlBgColor = ($event.target as HTMLInputElement).value" />
+          </div>
+          <div class="relative w-5 h-5 rounded cursor-pointer border border-white/20 overflow-hidden shrink-0"
+            :style="{ background: hlTextColor }"
+            title="Highlight text color">
+            <input type="color" :value="hlTextColor"
+              class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              @input="hlTextColor = ($event.target as HTMLInputElement).value" />
+          </div>
+        </div>
+        <div class="w-px h-4 bg-white/20" />
+
+        <button
+          class="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-white hover:bg-white/10 transition-colors"
+          title="Highlight selected text"
+          @click="applyHighlight">
+          <span class="px-1 rounded text-[10px] font-bold"
+            :style="{ background: hlBgColor || accentForToolbar, color: hlTextColor }">A</span>
+          Highlight
+        </button>
+        <div class="w-px h-4 bg-white/20" />
+        <button
+          class="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold text-white hover:bg-white/10 transition-colors"
+          title="Bold"
+          @click="applyBold">
+          <b class="text-[11px]">B</b>
+        </button>
+      </div>
+    </Teleport>
+
     <!-- Export toast -->
     <Teleport to="body">
       <Transition
@@ -527,6 +573,120 @@ const exportUrl = ref<string | null>(null)
 const design = ref<CarouselDesign>({ ...DEFAULT_DESIGN })
 const uploadingSlide = ref(false)
 const slideFileInput = ref<HTMLInputElement>()
+const slidePreviewRef = ref<HTMLElement>()
+const slidePreviewRefMobile = ref<HTMLElement>()
+const floatingToolbarEl = ref<HTMLElement>()
+
+// Floating highlight toolbar — shown when text is selected on the slide preview
+const floatingToolbar = reactive({ visible: false, x: 0, y: 0, field: '' as 'title' | 'body' | '', text: '', rawStart: 0, rawEnd: 0 })
+const accentForToolbar = computed(() => design.value.accent_color || '#f97316')
+const hlBgColor = ref('')   // empty = use accent color
+const hlTextColor = ref('#ffffff')
+
+// Map selected text within rendered v-html back to raw string offsets.
+// The rendered HTML may contain <span> tags (from ==markers==), so we strip
+// all HTML tags and unescape HTML entities to get plain text, then find the
+// selection within the raw source string.
+function findRawOffset(raw: string, renderedSelectedText: string): { start: number; end: number } | null {
+  // Strip ==...==  and **...** markers from raw to get plain visible text
+  const plain = raw
+    .replace(/==(#[0-9a-fA-F]{3,8}\|#[0-9a-fA-F]{3,8}\|)?(.+?)==/g, '$2')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+  const idx = plain.indexOf(renderedSelectedText)
+  if (idx === -1) return null
+
+  // Walk raw string mapping plain-text index back to raw index.
+  // Skip over opening/closing marker tokens without advancing plainIdx.
+  const colorPfxRe = /^==#[0-9a-fA-F]{3,8}\|#[0-9a-fA-F]{3,8}\|/
+  let rawIdx = 0
+  let plainIdx = 0
+  let rawStart = -1
+  let rawEnd = -1
+  while (rawIdx <= raw.length) {
+    if (plainIdx === idx) rawStart = rawIdx
+    if (plainIdx === idx + renderedSelectedText.length) { rawEnd = rawIdx; break }
+    if (rawIdx === raw.length) break
+    // Skip extended ==color|color| opening marker
+    const colorMatch = raw.slice(rawIdx).match(colorPfxRe)
+    if (colorMatch) { rawIdx += colorMatch[0].length; continue }
+    // Skip plain == closing/opening marker
+    if (raw.startsWith('==', rawIdx)) { rawIdx += 2; continue }
+    // Skip ** opening/closing marker
+    if (raw.startsWith('**', rawIdx)) { rawIdx += 2; continue }
+    rawIdx++
+    plainIdx++
+  }
+  if (rawStart === -1 || rawEnd === -1) return null
+  return { start: rawStart, end: rawEnd }
+}
+
+const onPreviewMouseUp = () => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+    floatingToolbar.visible = false
+    return
+  }
+
+  // Find the closest [data-field] ancestor of the selection anchor
+  const anchorNode = sel.anchorNode
+  const el = anchorNode instanceof Element
+    ? anchorNode.closest('[data-field]')
+    : anchorNode?.parentElement?.closest('[data-field]')
+
+  if (!el) { floatingToolbar.visible = false; return }
+
+  const field = el.getAttribute('data-field') as 'title' | 'body'
+  const selectedText = sel.toString()
+
+  const raw = field === 'title' ? editTitle.value : editBody.value
+  const offsets = findRawOffset(raw, selectedText)
+  if (!offsets) { floatingToolbar.visible = false; return }
+
+  // Position above the selection
+  const range = sel.getRangeAt(0)
+  const rect = range.getBoundingClientRect()
+  floatingToolbar.x = rect.left + rect.width / 2
+  floatingToolbar.y = rect.top - 48
+  floatingToolbar.visible = true
+  floatingToolbar.field = field
+  floatingToolbar.text = selectedText
+  floatingToolbar.rawStart = offsets.start
+  floatingToolbar.rawEnd = offsets.end
+}
+
+const applyWrap = (open: string, close: string) => {
+  const { field, rawStart, rawEnd } = floatingToolbar
+  if (!field) return
+  const val = field === 'title' ? editTitle.value : editBody.value
+  const newVal = val.slice(0, rawStart) + open + val.slice(rawStart, rawEnd) + close + val.slice(rawEnd)
+  if (field === 'title') editTitle.value = newVal
+  else editBody.value = newVal
+  floatingToolbar.visible = false
+  window.getSelection()?.removeAllRanges()
+  nextTick(() => saveSlide())
+}
+const applyHighlight = () => {
+  const bg = hlBgColor.value || accentForToolbar.value
+  const fg = hlTextColor.value || '#ffffff'
+  const isDefault = bg === accentForToolbar.value && fg === '#ffffff'
+  if (isDefault) {
+    applyWrap('==', '==')
+  } else {
+    applyWrap(`==${bg}|${fg}|`, '==')
+  }
+}
+const applyBold = () => applyWrap('**', '**')
+
+// Hide toolbar on any click outside (but not on the toolbar itself)
+onMounted(() => {
+  document.addEventListener('mousedown', (e) => {
+    if (!floatingToolbar.visible) return
+    // Don't hide if clicking inside the floating toolbar
+    const target = e.target as Node
+    if (floatingToolbarEl.value?.contains(target)) return
+    floatingToolbar.visible = false
+  })
+})
 
 // Generation history
 const showHistory = ref(false)
@@ -607,10 +767,19 @@ const thumbnailScaleStyleMobile = computed(() => {
   const renderedW = 320
   const renderedH = renderedW * h / w
   const scale = 60 / renderedW
+  const scaledH = Math.round(renderedH * scale)
   return {
-    transform: `scale(${scale})`,
-    height: `${renderedH}px`,
-    marginBottom: `${renderedH * (scale - 1)}px`,
+    inner: {
+      transform: `scale(${scale})`,
+      transformOrigin: 'top left',
+      width: `${renderedW}px`,
+      height: `${renderedH}px`,
+    },
+    container: {
+      width: '60px',
+      height: `${scaledH}px`,
+      overflow: 'hidden',
+    },
   }
 })
 

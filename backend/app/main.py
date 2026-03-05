@@ -17,9 +17,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Carousel Generator API", version="1.0.0", lifespan=lifespan)
 
+_cors_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

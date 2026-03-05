@@ -34,7 +34,7 @@ export const useAuth = () => {
 
   const logout = () => {
     clearToken()
-    navigateTo("/login")
+    navigateTo("/")
   }
 
   const authHeaders = (): Record<string, string> => {

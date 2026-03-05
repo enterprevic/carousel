@@ -104,22 +104,22 @@
       </div>
 
       <!-- Actions (always visible, CTA slides up on hover) -->
-      <div class="flex gap-1.5 transition-transform duration-300 group-hover:-translate-y-0.5" @click.stop>
+      <div class="flex gap-1 transition-transform duration-300 group-hover:-translate-y-0.5" @click.stop>
         <NuxtLink
           :to="`/carousels/${carousel.id}/edit`"
-          class="btn-primary text-[12px] px-3 py-1.5 flex-1 justify-center"
+          class="btn-primary text-[11px] px-2.5 py-1.5 flex-1 justify-center min-w-0"
         >
           {{ carousel.status === 'draft' ? 'Open' : 'Edit' }}
         </NuxtLink>
         <button
           v-if="carousel.status === 'draft' || carousel.status === 'failed'"
-          class="btn-secondary text-[12px] px-3 py-1.5"
+          class="btn-secondary text-[11px] px-2.5 py-1.5 shrink-0"
           @click="$emit('generate', carousel.id)"
         >
-          Generate
+          Gen
         </button>
         <button
-          class="w-8 h-8 flex items-center justify-center rounded-xl text-[#aeaeb2] hover:bg-red-50 hover:text-[#ff3b30] transition-colors shrink-0"
+          class="w-7 h-7 flex items-center justify-center rounded-xl text-[#aeaeb2] hover:bg-red-50 hover:text-[#ff3b30] transition-colors shrink-0"
           aria-label="Delete carousel"
           title="Delete carousel"
           @click="handleDelete"
