@@ -375,7 +375,8 @@ generator/
 |------|------|
 | YouTube transcripts | Requires the video to have auto-generated or manual captions; private/age-restricted videos fall back to URL + notes |
 | URL scraping | Some sites block scrapers or require JS — content fetch may fail silently and fall back to the raw URL |
-| Export speed | First export per server start is slower while Playwright initialises Chromium |
+| Export speed | Playwright launches a new Chromium process per export job; first export is slower while Chromium initialises |
+| Rate limiting | The 30s generation cooldown is in-process; it resets on container restart |
 | Concurrency | Generation and export run as FastAPI `BackgroundTasks` (in-process); use Celery + Redis for production scale |
 | Export URL TTL | Presigned download URLs expire after 24 hours with no regeneration path |
 
