@@ -10,9 +10,18 @@ function isTokenExpired(token: string): boolean {
 }
 
 export default defineNuxtRouteMiddleware((to) => {
-  if (PUBLIC_PATHS.includes(to.path)) return
   if (!import.meta.client) return // skip during SSR
 
   const token = localStorage.getItem("auth_token")
-  if (!token || isTokenExpired(token)) return navigateTo("/")
+  const loggedIn = !!(token && !isTokenExpired(token))
+
+  // Redirect logged-in users away from auth/landing pages to dashboard
+  if (loggedIn && (to.path === "/" || to.path === "/login" || to.path === "/register")) {
+    return navigateTo("/dashboard")
+  }
+
+  // Redirect unauthenticated users away from protected pages
+  if (!loggedIn && !PUBLIC_PATHS.includes(to.path)) {
+    return navigateTo("/")
+  }
 })

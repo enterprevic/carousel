@@ -11,7 +11,7 @@ export interface CarouselFormat {
   style_hint: string
 }
 
-export type FontChoice = "system" | "playfair" | "oswald" | "montserrat" | "opensans" | "lato" | "merriweather" | "georgia"
+export type FontChoice = "system" | "inter" | "firacode" | "roboto_condensed" | "jost" | "caveat" | "source_sans3" | "playfair" | "oswald" | "montserrat" | "opensans" | "lato" | "merriweather" | "georgia"
 export type AspectRatio = "4:5" | "9:16" | "1:1"
 export type Pattern = "none" | "dots1" | "dots2" | "dots3" | "grid" | "lines" | "cells" | "blobs"
 
@@ -100,6 +100,7 @@ export interface Export {
   carousel_id: string
   status: ExportStatus
   file_url: string | null
+  slide_urls: string[] | null
   error: string | null
   created_at: string
 }
@@ -128,6 +129,12 @@ export const DEFAULT_DESIGN: CarouselDesign = {
 
 export const FONT_FAMILIES: Record<string, string> = {
   system: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif",
+  inter: "'Inter', 'Helvetica Neue', sans-serif",
+  firacode: "'Fira Code', 'Courier New', monospace",
+  roboto_condensed: "'Roboto Condensed', Arial, sans-serif",
+  jost: "'Jost', 'Helvetica Neue', sans-serif",
+  caveat: "'Caveat', cursive",
+  source_sans3: "'Source Sans 3', 'Helvetica Neue', sans-serif",
   playfair: "'Playfair Display', Georgia, serif",
   oswald: "'Oswald', 'Arial Narrow', sans-serif",
   montserrat: "'Montserrat', 'Helvetica Neue', sans-serif",

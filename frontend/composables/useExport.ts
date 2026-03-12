@@ -5,6 +5,14 @@ export const useExport = () => {
   const base = config.public.apiBase
   const { authHeaders, getToken } = useAuth()
 
+  const getLatestExport = async (carouselId: string): Promise<Export | null> => {
+    try {
+      return await $fetch<Export | null>(`${base}/exports?carousel_id=${carouselId}`, { headers: authHeaders() })
+    } catch {
+      return null
+    }
+  }
+
   const startExport = async (carouselId: string): Promise<Export> => {
     return await $fetch<Export>(`${base}/exports`, {
       method: "POST",
@@ -85,5 +93,5 @@ export const useExport = () => {
 
   const pollExport = watchExport
 
-  return { startExport, getExport, watchExport, pollExport }
+  return { getLatestExport, startExport, getExport, watchExport, pollExport }
 }

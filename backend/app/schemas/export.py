@@ -1,7 +1,7 @@
 from __future__ import annotations
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 
@@ -14,6 +14,7 @@ class ExportRead(BaseModel):
     carousel_id: uuid.UUID
     status: str
     file_url: Optional[str]
+    slide_urls: Optional[List[str]] = None
     error: Optional[str] = None
     created_at: datetime
 

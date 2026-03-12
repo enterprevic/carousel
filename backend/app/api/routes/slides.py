@@ -85,6 +85,43 @@ async def delete_slide(
     await db.commit()
 
 
+@router.post("/{carousel_id}/slides/{slide_id}/duplicate", response_model=SlideRead, status_code=201)
+async def duplicate_slide(
+    carousel_id: uuid.UUID,
+    slide_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
+):
+    c = await db.get(Carousel, carousel_id)
+    if not c or c.user_id != user_id:
+        raise HTTPException(404, "Carousel not found")
+    result = await db.execute(
+        select(Slide).where(Slide.id == slide_id, Slide.carousel_id == carousel_id)
+    )
+    slide = result.scalar_one_or_none()
+    if not slide:
+        raise HTTPException(404, "Slide not found")
+    # Shift all slides after this one up by 1
+    after = await db.execute(
+        select(Slide).where(Slide.carousel_id == carousel_id, Slide.order > slide.order).order_by(Slide.order)
+    )
+    for s in after.scalars().all():
+        s.order += 1
+    new_slide = Slide(
+        id=uuid.uuid4(),
+        carousel_id=carousel_id,
+        order=slide.order + 1,
+        title=slide.title,
+        body=slide.body,
+        footer_cta=slide.footer_cta,
+        overrides=dict(slide.overrides) if slide.overrides else {},
+    )
+    db.add(new_slide)
+    await db.commit()
+    await db.refresh(new_slide)
+    return new_slide
+
+
 @router.patch("/{carousel_id}/slides/{slide_id}/order", response_model=list[SlideRead])
 async def move_slide(
     carousel_id: uuid.UUID,

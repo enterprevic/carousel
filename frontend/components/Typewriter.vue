@@ -70,7 +70,7 @@ const tick = () => {
     } else if (texts.value.length > 1) {
       timeout = setTimeout(() => {
         isDeleting.value = true
-        tick()
+        timeout = setTimeout(tick, props.deleteSpeed)
       }, props.waitTime)
     }
   }

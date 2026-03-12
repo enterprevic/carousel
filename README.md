@@ -1,4 +1,4 @@
-# CarouselGen
+# trendsee
 
 AI-powered Instagram carousel generator. Paste text, a YouTube link, or any URL — AI writes the slides, you style and export as high-resolution PNGs.
 
@@ -13,7 +13,7 @@ AI-powered Instagram carousel generator. Paste text, a YouTube link, or any URL 
 | Storage | MinIO (S3-compatible) |
 | LLM | Any OpenAI-compatible API (Groq, OpenAI, OpenRouter, Ollama) |
 | Export | Playwright headless Chromium → PNG → ZIP |
-| Frontend | Nuxt 3 + Vue 3 + Tailwind CSS |
+| Frontend | Nuxt 3 + Vue 3 + Tailwind CSS + Pinia |
 | Auth | JWT + bcrypt (per-user accounts) |
 | Infra | Docker Compose |
 
@@ -65,15 +65,14 @@ Visit **[http://localhost:3000](http://localhost:3000)**, register an account, a
 - Structured slide output: title, body, optional CTA per slide
 - Choose slide count (6–12), language (EN / RU / FR), and an optional style hint
 - Automatic retry on malformed JSON responses
-- Generation history — view past generation runs per carousel
 
 ### Visual Editor
 - **Live slide preview** — see exactly how your slide will look as you edit
-- **Slide list sidebar** — navigate, reorder (up/down), and delete slides
+- **Slide list sidebar** — navigate, reorder (up/down), duplicate, and delete slides
 - **Inline text formatting** — select text directly on the slide preview to get a floating toolbar:
   - **Highlight** — wraps selected text in a colored highlight span
   - **Bold** — wraps selected text in bold
-  - **Custom highlight colors** — pick background color and text color per highlight via color swatches in the toolbar
+  - **Custom highlight colors** — pick background color and text color per highlight
 - **Title and body editing** with blur-to-save
 - **Optional CTA line** per slide (e.g. "Save this post ↓")
 
@@ -85,9 +84,9 @@ Visit **[http://localhost:3000](http://localhost:3000)**, register an account, a
 - **8 overlay patterns**: Dots (S/M/L), Grid, Lines, Cells, Blobs — with custom color and opacity
 - **3 aspect ratios**: 4:5 (portrait), 9:16 (stories), 1:1 (square)
 - **Horizontal alignment**: left, center, right
-- **Vertical alignment**: top, center, bottom
+- **Vertical alignment**: top, center, bottom, spread
 - **Custom padding**: 20–200 px
-- **Title font** and **body font**: 10 choices including Playfair, Oswald, Montserrat, Space Mono, Merriweather, and more
+- **Title font** and **body font**: 10+ choices including Playfair, Oswald, Montserrat, Space Mono, Merriweather, and more
 - **Title highlight color** — highlight-box style behind the title
 - **Header / Footer text** — optional persistent text shown on every slide (e.g. @username)
 
@@ -100,29 +99,23 @@ Any design field can be overridden on individual slides independently of the car
 - Header / footer visibility and text
 
 ### Export
-- **PNG export** — Playwright renders each slide at full resolution
-- Output sizes: 1080×1350 (4:5), 1080×1920 (9:16), 1080×1080 (1:1)
-- Slides packed into a ZIP archive and uploaded to MinIO
+- **Per-slide PNGs** — each slide exported individually and available for direct download
+- **ZIP archive** — all slides packed into a single ZIP
+- Output sizes: 1080×1350 (4:5), 1080×1920 (9:16), 1080×1080 (1:1) — pixel-perfect, layout-accurate
+- Exports auto-restored on page load (no need to re-export on revisit)
 - Inline markup (highlights, bold) renders correctly in exports
+
+### UI & Navigation
+- **Collapsible sidebar** — desktop slide-in panel with reopen button; mobile bottom-sheet
+- **Internationalisation** — full Russian / English UI; language selector persisted per user
+- **Landing page** — public marketing page with typewriter hero, feature sections, testimonials
+- **Auth flow** — logged-in users skip landing page and go straight to dashboard
 
 ### Account & Data
 - Per-user registration and login (JWT, bcrypt)
 - All carousels, slides, and assets are scoped to the authenticated user
 - Change password from the profile page
 - Usage stats: carousel count, generation count, tokens used
-
----
-
-## LLM Configuration
-
-Configure via `.env`:
-
-| Provider | `LLM_BASE_URL` | `LLM_MODEL` |
-|----------|----------------|-------------|
-| **Groq** (default) | `https://api.groq.com/openai/v1/chat/completions` | `llama-3.3-70b-versatile` |
-| OpenAI | `https://api.openai.com/v1/chat/completions` | `gpt-4o-mini` |
-| OpenRouter | `https://openrouter.ai/api/v1/chat/completions` | `meta-llama/llama-3.1-8b-instruct:free` |
-| Ollama (local) | `http://host.docker.internal:11434/v1/chat/completions` | `llama3.2` |
 
 ---
 
@@ -186,7 +179,7 @@ Authorization: Bearer <token>
 | `darkening` | float | 0.0–0.9 | `0.0` |
 | `padding` | int | 0–200 | `40` |
 | `align_h` | string | `left` `center` `right` | `center` |
-| `align_v` | string | `top` `center` `bottom` | `center` |
+| `align_v` | string | `top` `center` `bottom` `spread` | `center` |
 | `aspect_ratio` | string | `4:5` `9:16` `1:1` | `4:5` |
 | `accent_color` | string\|null | hex | template default |
 | `title_highlight` | string\|null | hex | `null` |
@@ -206,6 +199,7 @@ Authorization: Bearer <token>
 |--------|------|-------------|
 | `GET` | `/carousels/{id}/slides` | List all slides (ordered) |
 | `PATCH` | `/carousels/{id}/slides/{slide_id}` | Update slide content or overrides |
+| `POST` | `/carousels/{id}/slides/{slide_id}/duplicate` | Duplicate a slide |
 | `PATCH` | `/carousels/{id}/slides/{slide_id}/order` | Reorder a slide `{new_order}` |
 | `DELETE` | `/carousels/{id}/slides/{slide_id}` | Delete a slide |
 
@@ -226,8 +220,6 @@ Authorization: Bearer <token>
 `overrides` accepts any design field and applies it to that slide only.
 
 #### Inline markup
-
-Two markers are supported in `title` and `body` fields:
 
 | Syntax | Result |
 |--------|--------|
@@ -252,12 +244,15 @@ Status flow: `queued` → `running` → `done` | `failed`
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/exports` | Start PNG export `{carousel_id}` |
-| `GET` | `/exports/{id}` | Poll status + get download URL |
+| `GET` | `/exports/{id}` | Poll status + get download URLs |
 | `GET` | `/exports/{id}/stream` | SSE stream for real-time status updates |
+| `GET` | `/carousels/{id}/exports/latest` | Get most recent completed export |
 
 Status flow: `queued` → `running` → `done` | `failed`
 
-On `done`, `file_url` is a presigned MinIO URL (24h TTL) pointing to a ZIP of PNG slides.
+On `done`:
+- `file_url` — presigned MinIO URL (24h TTL) for ZIP of all slides
+- `slide_urls` — array of presigned URLs, one per slide PNG
 
 | Aspect Ratio | Dimensions | Use case |
 |-------------|------------|----------|
@@ -302,9 +297,9 @@ curl -X POST http://localhost:8000/exports \
   -H "Authorization: $TOKEN" -H "Content-Type: application/json" \
   -d '{"carousel_id": "abc-123"}'
 
-# 5. Download ZIP
+# 5. Download ZIP or individual slides
 curl -H "Authorization: $TOKEN" http://localhost:8000/exports/exp-789
-# → {"status": "done", "file_url": "http://..."}
+# → {"status": "done", "file_url": "http://...", "slide_urls": ["http://...", ...]}
 curl -L "<file_url>" -o slides.zip && unzip slides.zip
 ```
 
@@ -331,20 +326,31 @@ generator/
 │   ├── fonts/                       # Bundled TTF fonts for export
 │   └── requirements.txt
 ├── frontend/
+│   ├── layouts/
+│   │   └── default.vue              # App shell with collapsible sidebar
 │   ├── pages/
-│   │   ├── index.vue                # Landing page
+│   │   ├── index.vue                # Public landing page
 │   │   ├── login.vue / register.vue # Auth
 │   │   ├── dashboard.vue            # Carousel list
 │   │   ├── profile.vue              # Account settings
 │   │   └── carousels/
-│   │       ├── new.vue              # Creation wizard
-│   │       └── [id]/edit.vue        # Visual editor
+│   │       ├── new.vue              # Creation wizard + editor
+│   │       └── [id]/edit.vue        # Visual editor (direct link)
 │   ├── components/
+│   │   ├── AppSidebar.vue           # Desktop + mobile navigation sidebar
+│   │   ├── NavItems.vue             # Sidebar nav link list
 │   │   ├── SlidePreview.vue         # Live slide renderer (v-html + inline markup)
 │   │   ├── CarouselCard.vue         # Dashboard card
-│   │   └── DesignPanel.vue          # Design controls sidebar
-│   ├── composables/                 # useAuth, useCarousels, useGeneration, useExport, useToast
-│   ├── middleware/auth.global.ts    # JWT expiry check on every route
+│   │   ├── DesignPanel.vue          # Design controls panel
+│   │   └── Typewriter.vue           # Animated typewriter for landing hero
+│   ├── composables/
+│   │   ├── useAuth.ts               # Login, register, logout, token helpers
+│   │   ├── useCarousels.ts          # Carousel CRUD
+│   │   ├── useGeneration.ts         # Generation polling + SSE
+│   │   ├── useExport.ts             # Export start, poll, latest restore
+│   │   ├── useLang.ts               # RU/EN i18n with localStorage persistence
+│   │   └── useToast.ts              # Toast notifications
+│   ├── middleware/auth.global.ts    # JWT expiry guard + auth redirects
 │   └── types/index.ts               # TypeScript interfaces + DEFAULT_DESIGN
 ├── docker-compose.yml
 └── .env.example
@@ -371,12 +377,26 @@ generator/
 
 ## Known Limitations
 
+## LLM Configuration
+
+Configure via `.env`:
+
+| Provider | `LLM_BASE_URL` | `LLM_MODEL` |
+|----------|----------------|-------------|
+| **Groq** (default) | `https://api.groq.com/openai/v1/chat/completions` | `llama-3.3-70b-versatile` |
+| OpenAI | `https://api.openai.com/v1/chat/completions` | `gpt-4o-mini` |
+| OpenRouter | `https://openrouter.ai/api/v1/chat/completions` | `meta-llama/llama-3.1-8b-instruct:free` |
+| Ollama (local) | `http://host.docker.internal:11434/v1/chat/completions` | `llama3.2` |
+
+---
+
+## Known Limitations
+
 | Area | Note |
 |------|------|
 | YouTube transcripts | Requires the video to have auto-generated or manual captions; private/age-restricted videos fall back to URL + notes |
 | URL scraping | Some sites block scrapers or require JS — content fetch may fail silently and fall back to the raw URL |
 | Export speed | Playwright launches a new Chromium process per export job; first export is slower while Chromium initialises |
-| Rate limiting | The 30s generation cooldown is in-process; it resets on container restart |
 | Concurrency | Generation and export run as FastAPI `BackgroundTasks` (in-process); use Celery + Redis for production scale |
 | Export URL TTL | Presigned download URLs expire after 24 hours with no regeneration path |
 

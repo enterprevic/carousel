@@ -1,10 +1,10 @@
 <template>
   <div
     class="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-black/[0.06] shadow-[0_0_0_1px_rgba(0,0,0,.03),0_2px_4px_rgba(0,0,0,.05),0_12px_24px_rgba(0,0,0,.05)] cursor-pointer transition-all duration-300 hover:shadow-[0_0_0_1px_rgba(0,0,0,.06),0_8px_24px_rgba(0,0,0,.09),0_24px_48px_rgba(0,0,0,.10)] hover:-translate-y-0.5"
-    @click="$router.push(`/carousels/${carousel.id}/edit`)"
+    @click="$router.push(`/carousels/new?id=${carousel.id}`)"
   >
     <!-- Slide preview -->
-    <div class="slide-aspect relative overflow-hidden bg-[#f2f2f7] shrink-0">
+    <div class="slide-aspect relative overflow-hidden bg-[#F4F5F6] shrink-0">
 
       <!-- Generating -->
       <div
@@ -88,7 +88,7 @@
     <!-- Info section -->
     <div class="flex flex-col flex-1 p-4 pb-3">
       <!-- Title -->
-      <h3 class="font-semibold text-[13.5px] text-[#1c1c1e] leading-snug line-clamp-2 mb-2 transition-transform duration-300 group-hover:-translate-y-0.5">
+      <h3 class="font-semibold text-[13.5px] text-[#000000] leading-snug line-clamp-2 mb-2 transition-transform duration-300 group-hover:-translate-y-0.5">
         {{ carousel.title }}
       </h3>
 
@@ -106,7 +106,7 @@
       <!-- Actions (always visible, CTA slides up on hover) -->
       <div class="flex gap-1 transition-transform duration-300 group-hover:-translate-y-0.5" @click.stop>
         <NuxtLink
-          :to="`/carousels/${carousel.id}/edit`"
+          :to="`/carousels/new?id=${carousel.id}`"
           class="btn-primary text-[11px] px-2.5 py-1.5 flex-1 justify-center min-w-0"
         >
           {{ carousel.status === 'draft' ? 'Open' : 'Edit' }}

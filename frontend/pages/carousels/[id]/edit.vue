@@ -1,8 +1,8 @@
 <template>
-  <div class="h-[100dvh] bg-[#f2f2f7] flex flex-col overflow-hidden">
+  <div class="h-[100dvh] bg-[#F4F5F6] flex flex-col overflow-hidden relative">
     <ToastContainer />
     <!-- Header -->
-    <header class="sticky top-0 z-30 bg-[#fbfbfd]/90 backdrop-blur-xl border-b border-black/[0.06] shrink-0">
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-[#E6E8EA] shrink-0">
       <div class="px-3 sm:px-4 h-14 flex items-center gap-2 sm:gap-3">
         <NuxtLink to="/dashboard"
           class="w-8 h-8 rounded-xl flex items-center justify-center text-[#3a3a3c] hover:bg-black/5 transition-colors shrink-0">
@@ -13,7 +13,7 @@
 
         <div class="flex-1 min-w-0">
           <input v-if="carousel" v-model="editableTitle"
-            class="font-semibold text-[#1c1c1e] text-sm bg-transparent border-0 focus:outline-none focus:ring-0 w-full truncate placeholder:text-[#8e8e93]"
+            class="font-semibold text-[#000000] text-sm bg-transparent border-0 focus:outline-none focus:ring-0 w-full truncate placeholder:text-[#8e8e93]"
             placeholder="Untitled carousel" @blur="saveTitle" />
           <div v-else class="h-4 bg-[#d1d1d6] rounded-lg animate-pulse w-40" />
         </div>
@@ -82,7 +82,7 @@
               <button
                 class="relative shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-150 w-full"
                 :class="activeIndex === i
-                  ? 'border-[#0071e3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
+                  ? 'border-[#2B31B3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
                   : 'border-[#e5e5ea] hover:border-[#c6c6c8]'"
                 :aria-label="`Select slide ${i + 1}`"
                 @click="activeIndex = i">
@@ -101,14 +101,14 @@
                 <button class="w-5 h-5 bg-white/90 rounded-md flex items-center justify-center shadow-sm disabled:opacity-30"
                   :disabled="i === 0" :aria-label="`Move slide ${i + 1} up`"
                   @click.stop="handleMoveSlide(slide.id, 'up')">
-                  <svg class="w-3 h-3 text-[#1c1c1e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 text-[#000000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
                   </svg>
                 </button>
                 <button class="w-5 h-5 bg-white/90 rounded-md flex items-center justify-center shadow-sm disabled:opacity-30"
                   :disabled="i === slides.length - 1" :aria-label="`Move slide ${i + 1} down`"
                   @click.stop="handleMoveSlide(slide.id, 'down')">
-                  <svg class="w-3 h-3 text-[#1c1c1e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 text-[#000000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -136,7 +136,7 @@
         <div class="flex-1 flex overflow-hidden">
           <div class="flex-1 py-6 px-8 flex items-start justify-center overflow-y-auto">
             <div v-if="generating || carousel.status === 'generating'" class="text-center mt-20">
-              <div class="w-14 h-14 border-[3px] border-[#0071e3]/20 border-t-[#0071e3] rounded-full animate-spin mx-auto mb-5" />
+              <div class="w-14 h-14 border-[3px] border-[#2B31B3]/20 border-t-[#2B31B3] rounded-full animate-spin mx-auto mb-5" />
               <p class="text-[#3a3a3c] font-medium">Generating your slides…</p>
               <p class="text-[#8e8e93] text-sm mt-1">This takes about 15–30 seconds</p>
             </div>
@@ -203,7 +203,7 @@
                   <div v-if="editOverrideBgImage">
                     <div class="flex items-center justify-between mb-1.5">
                       <label class="label mb-0">Darkening</label>
-                      <span class="text-xs text-[#0071e3] font-semibold">{{ Math.round((editOverrideDarkening ?? 0) * 100) }}%</span>
+                      <span class="text-xs text-[#2B31B3] font-semibold">{{ Math.round((editOverrideDarkening ?? 0) * 100) }}%</span>
                     </div>
                     <input type="range" :value="editOverrideDarkening ?? 0" min="0" max="0.9" step="0.05"
                       @input="editOverrideDarkening = parseFloat(($event.target as HTMLInputElement).value)"
@@ -256,7 +256,7 @@
                 <button v-for="(slide, i) in slides" :key="slide.id"
                   class="relative shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-150"
                   :class="activeIndex === i
-                    ? 'border-[#0071e3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
+                    ? 'border-[#2B31B3] shadow-[0_0_0_3px_rgba(0,113,227,0.15)]'
                     : 'border-[#e5e5ea]'"
                   :style="thumbnailScaleStyleMobile.container"
                   @click="activeIndex = i">
@@ -274,7 +274,7 @@
             <!-- Active slide preview -->
             <div class="flex-1 overflow-y-auto py-4 px-4 flex flex-col items-center">
               <div v-if="generating || carousel.status === 'generating'" class="text-center mt-8">
-                <div class="w-10 h-10 border-[3px] border-[#0071e3]/20 border-t-[#0071e3] rounded-full animate-spin mx-auto mb-4" />
+                <div class="w-10 h-10 border-[3px] border-[#2B31B3]/20 border-t-[#2B31B3] rounded-full animate-spin mx-auto mb-4" />
                 <p class="text-[#3a3a3c] font-medium text-sm">Generating…</p>
               </div>
               <div v-else-if="slides.length > 0" class="w-full max-w-[260px]">
@@ -361,7 +361,7 @@
                   <div v-if="editOverrideBgImage">
                     <div class="flex items-center justify-between mb-1.5">
                       <label class="label mb-0">Darkening</label>
-                      <span class="text-xs text-[#0071e3] font-semibold">{{ Math.round((editOverrideDarkening ?? 0) * 100) }}%</span>
+                      <span class="text-xs text-[#2B31B3] font-semibold">{{ Math.round((editOverrideDarkening ?? 0) * 100) }}%</span>
                     </div>
                     <input type="range" :value="editOverrideDarkening ?? 0" min="0" max="0.9" step="0.05"
                       @input="editOverrideDarkening = parseFloat(($event.target as HTMLInputElement).value)"
@@ -396,7 +396,7 @@
         <nav class="shrink-0 bg-white/90 backdrop-blur-xl border-t border-black/[0.06] flex safe-area-inset-bottom">
           <button v-for="tab in mobileTabs" :key="tab.key"
             class="flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors"
-            :class="mobileTab === tab.key ? 'text-[#0071e3]' : 'text-[#8e8e93]'"
+            :class="mobileTab === tab.key ? 'text-[#2B31B3]' : 'text-[#8e8e93]'"
             @click="mobileTab = tab.key">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="tab.icon" />
@@ -409,7 +409,7 @@
 
     <!-- Loading state -->
     <div v-else class="flex-1 flex items-center justify-center">
-      <div class="w-10 h-10 border-[3px] border-[#0071e3]/20 border-t-[#0071e3] rounded-full animate-spin" />
+      <div class="w-10 h-10 border-[3px] border-[#2B31B3]/20 border-t-[#2B31B3] rounded-full animate-spin" />
     </div>
 
     <!-- Generation history panel -->
@@ -428,7 +428,7 @@
           <div class="relative bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80dvh] flex flex-col shadow-2xl">
             <!-- Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-[#f2f2f7] shrink-0">
-              <h2 class="font-semibold text-[#1c1c1e] text-sm">Generation History</h2>
+              <h2 class="font-semibold text-[#000000] text-sm">Generation History</h2>
               <button class="w-7 h-7 rounded-full flex items-center justify-center text-[#8e8e93] hover:bg-black/5 transition-colors"
                 @click="showHistory = false">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -439,7 +439,7 @@
             <!-- List -->
             <div class="flex-1 overflow-y-auto px-5 py-3 space-y-2">
               <div v-if="historyLoading" class="flex items-center justify-center py-8">
-                <div class="w-6 h-6 border-2 border-[#0071e3]/20 border-t-[#0071e3] rounded-full animate-spin" />
+                <div class="w-6 h-6 border-2 border-[#2B31B3]/20 border-t-[#2B31B3] rounded-full animate-spin" />
               </div>
               <div v-else-if="historyError" class="text-sm text-[#ff3b30] text-center py-6">{{ historyError }}</div>
               <div v-else-if="generationHistory.length === 0" class="text-sm text-[#8e8e93] text-center py-6">No generations yet</div>
@@ -476,7 +476,7 @@
     <Teleport to="body">
       <div v-if="floatingToolbar.visible"
         ref="floatingToolbarEl"
-        class="fixed z-[100] flex items-center gap-0.5 bg-[#1c1c1e]/95 backdrop-blur-sm rounded-xl shadow-xl px-1 py-1 pointer-events-auto"
+        class="fixed z-[100] flex items-center gap-0.5 bg-[#000000]/95 backdrop-blur-sm rounded-xl shadow-xl px-1 py-1 pointer-events-auto"
         :style="{ left: floatingToolbar.x + 'px', top: floatingToolbar.y + 'px', transform: 'translateX(-50%)' }">
 
         <!-- Highlight color swatches -->
@@ -515,33 +515,86 @@
       </div>
     </Teleport>
 
-    <!-- Export toast -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-all duration-300 ease-out"
-        enter-from-class="translate-y-4 opacity-0 scale-95"
-        enter-to-class="translate-y-0 opacity-100 scale-100"
-        leave-active-class="transition-all duration-200 ease-in"
-        leave-from-class="translate-y-0 opacity-100 scale-100"
-        leave-to-class="translate-y-4 opacity-0 scale-95"
-      >
-        <div v-if="exportUrl"
-          class="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.15)] border border-white/50 p-4 flex items-center gap-3 z-50 max-w-sm">
-          <div class="w-9 h-9 bg-[#34c759]/10 rounded-xl flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+    <!-- Export screen overlay -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-2"
+    >
+      <div v-if="exportUrl" class="absolute inset-0 z-40 bg-[#F4F5F6] flex flex-col overflow-hidden">
+        <!-- Export header -->
+        <div class="shrink-0 bg-white border-b border-[#E6E8EA] px-4 sm:px-6 h-14 flex items-center gap-3">
+          <h1 class="font-bold text-[#000000] text-base flex-1">{{ t.exportReady }}</h1>
+          <button
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#e5e5ea] bg-white text-[#8e8e93] text-sm font-medium hover:bg-[#f7f7f8] hover:text-[#3a3a3c] transition-colors"
+            :disabled="exporting"
+            @click="exportUrl = null; handleExport(true)">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-[#1c1c1e]">Export ready!</p>
-            <p class="text-xs text-[#3a3a3c] mt-0.5">Your ZIP is ready to download</p>
-          </div>
-          <a :href="exportUrl" download class="btn-primary text-xs px-3 py-1.5">Download</a>
-          <button class="w-6 h-6 flex items-center justify-center rounded-full text-[#8e8e93] hover:text-[#3a3a3c] hover:bg-black/5 transition-colors text-lg leading-none"
-            @click="exportUrl = null">×</button>
+            {{ t.recreateBtn }}
+          </button>
+          <button
+            class="btn-secondary text-sm px-3 py-1.5 gap-1.5 flex items-center"
+            @click="exportUrl = null">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            {{ t.backToEditor }}
+          </button>
         </div>
-      </Transition>
-    </Teleport>
+
+        <!-- Slides grid -->
+        <div class="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
+          <div class="flex flex-wrap gap-4 sm:gap-5">
+            <div v-for="(slide, i) in slides" :key="slide.id" class="flex flex-col gap-2">
+              <!-- Slide preview thumbnail -->
+              <div class="relative rounded-xl overflow-hidden border border-[#e5e5ea] bg-white shadow-sm"
+                style="width: 180px; height: 225px;">
+                <div class="overflow-hidden" style="width: 180px; height: 225px;">
+                  <div :style="exportThumbnailScaleStyle">
+                    <SlidePreview :slide="slide" :design="design" />
+                  </div>
+                </div>
+                <!-- Slide number badge -->
+                <div class="absolute top-1.5 left-1.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                  {{ i + 1 }}
+                </div>
+              </div>
+              <!-- Per-slide download button -->
+              <button
+                style="width: 180px;"
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#e5e5ea] bg-white text-[#3a3a3c] text-xs font-medium hover:bg-[#f7f7f8] hover:border-[#c6c6c8] transition-all duration-150"
+                @click="downloadFile(exportSlideUrls[i], `slide_${String(i + 1).padStart(2, '0')}.png`)">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                {{ t.downloadSlide }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export footer -->
+        <div class="shrink-0 bg-white border-t border-[#E6E8EA] px-4 sm:px-8 py-4 flex items-center justify-between gap-4">
+          <p class="text-sm text-[#3a3a3c] font-medium">
+            <span class="text-[#34c759] font-bold mr-1">✓</span>
+            {{ t.slidesSuccess(slides.length) }}
+          </p>
+          <button
+            class="btn-primary text-sm px-4 py-2 gap-2 flex items-center shrink-0"
+            @click="downloadFile(exportUrl ?? undefined, 'slides.zip')">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {{ t.downloadAll }}
+          </button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -549,12 +602,15 @@
 import type { Carousel, Slide, CarouselDesign } from "~/types"
 import { DEFAULT_DESIGN } from "~/types"
 
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const config = useRuntimeConfig()
 const { authHeaders } = useAuth()
+const { t } = useLang()
 const { fetchCarousel, updateCarousel, updateDesign, fetchGenerations, deleteSlide, moveSlide } = useCarousels()
 const { startGeneration, pollGeneration } = useGeneration()
-const { startExport, pollExport } = useExport()
+const { getLatestExport, startExport, pollExport } = useExport()
 const { show: showToast } = useToast()
 
 const carouselId = route.params.id as string
@@ -570,6 +626,7 @@ const savingDesign = ref(false)
 const exporting = ref(false)
 const exportStatus = ref("Queuing…")
 const exportUrl = ref<string | null>(null)
+const exportSlideUrls = ref<string[]>([])
 const design = ref<CarouselDesign>({ ...DEFAULT_DESIGN })
 const uploadingSlide = ref(false)
 const slideFileInput = ref<HTMLInputElement>()
@@ -758,6 +815,21 @@ const thumbnailScaleStyle = computed(() => {
     transform: `scale(${scale})`,
     height: `${renderedH}px`,
     marginBottom: `${renderedH * (scale - 1)}px`,
+  }
+})
+
+// Export screen thumbnails: rendered at 320px width, scaled to ~180px display width
+const exportThumbnailScaleStyle = computed(() => {
+  const aspectRatio = design.value.aspect_ratio ?? "4:5"
+  const [w, h] = aspectRatio === "9:16" ? [9, 16] : aspectRatio === "1:1" ? [1, 1] : [4, 5]
+  const renderedW = 320
+  const renderedH = renderedW * h / w
+  const scale = 180 / renderedW
+  return {
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+    width: `${renderedW}px`,
+    height: `${renderedH}px`,
   }
 })
 
@@ -993,7 +1065,27 @@ const handleMoveSlide = async (slideId: string, direction: "up" | "down") => {
   } catch { alert("Failed to reorder slide.") }
 }
 
-const handleExport = async () => {
+const downloadFile = async (url: string | undefined, filename: string) => {
+  if (!url) return
+  const blob = await fetch(url).then((r) => r.blob())
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+const handleExport = async (forceNew = false) => {
+  // Reuse last completed export unless force-refreshing
+  if (!forceNew) {
+    const latest = await getLatestExport(carouselId)
+    if (latest?.file_url) {
+      exportUrl.value = latest.file_url
+      exportSlideUrls.value = latest.slide_urls ?? []
+      return
+    }
+  }
+
   exporting.value = true
   exportStatus.value = "Queuing…"
   try {
@@ -1002,7 +1094,7 @@ const handleExport = async () => {
     const frames = ["Rendering…", "Rendering.", "Rendering..", "Rendering..."]
     const timer = setInterval(() => { frame = (frame + 1) % frames.length; exportStatus.value = frames[frame] }, 600)
     pollExport(exp.id,
-      (done) => { clearInterval(timer); exporting.value = false; if (done.file_url) exportUrl.value = done.file_url },
+      (done) => { clearInterval(timer); exporting.value = false; if (done.file_url) { exportUrl.value = done.file_url; exportSlideUrls.value = done.slide_urls ?? [] } },
       (failed) => {
         clearInterval(timer); exporting.value = false
         const reason = (failed as any)?.error

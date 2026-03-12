@@ -209,12 +209,15 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
             return overrides[key]
         return design.get(key, default)
 
+    # Scale factor: all px sizes were authored for 1080-wide canvas; scale proportionally
+    scale = width / 1080.0
+
     bg_color = _ov("bg_color") or tpl["bg"]
     # Internalize image URLs for Playwright (which runs inside Docker and uses minio:9000)
     raw_bg_image = _ov("bg_image_url")
     bg_image_url = _internalize_url(raw_bg_image)
     darkening = _ov("darkening", 0.0)
-    padding = _ov("padding", 40)
+    padding = round(_ov("padding", 40) * scale)
     align_h = _ov("align_h") or "center"
     align_v = _ov("align_v") or "center"
     show_header = _ov("show_header", False)
@@ -228,7 +231,7 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
     title_highlight = _ov("title_highlight")
 
     justify_map = {"left": "flex-start", "center": "center", "right": "flex-end"}
-    align_map = {"top": "flex-start", "center": "center", "bottom": "flex-end"}
+    align_map = {"top": "flex-start", "center": "center", "bottom": "flex-end", "spread": "space-between"}
     text_align_map = {"left": "left", "center": "center", "right": "right"}
 
     bg_style = f"background-color: {bg_color};"
@@ -259,11 +262,12 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
         header_html = f"""
         <div style="
             position: absolute;
-            top: {padding}px;
-            left: {padding}px;
-            right: {padding}px;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: {padding}px {padding}px 0;
             font-family: {tpl['font_family']};
-            font-size: 22px;
+            font-size: {round(22 * scale)}px;
             color: {tpl['footer_color']};
             text-align: {text_align_map[align_h]};
             z-index: 10;
@@ -274,11 +278,12 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
         footer_html = f"""
         <div style="
             position: absolute;
-            bottom: {padding}px;
-            left: {padding}px;
-            right: {padding}px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0 {padding}px {padding}px;
             font-family: {tpl['font_family']};
-            font-size: 22px;
+            font-size: {round(22 * scale)}px;
             color: {tpl['footer_color']};
             text-align: {text_align_map[align_h]};
             z-index: 10;
@@ -287,10 +292,11 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
     slide_counter = f"""
     <div style="
         position: absolute;
-        top: {padding}px;
-        right: {padding}px;
+        top: 0;
+        right: 0;
+        padding: {padding}px {padding}px 0 0;
         font-family: {tpl['font_family']};
-        font-size: 20px;
+        font-size: {round(20 * scale)}px;
         color: {tpl['footer_color']};
         z-index: 10;
     ">{slide_number}/{total}</div>"""
@@ -299,14 +305,23 @@ def build_slide_html(slide, design: dict, slide_number: int, total: int, width: 
     if slide.footer_cta:
         footer_cta_html = f"""
         <div style="
-            margin-top: 32px;
+            margin-top: {round(32 * scale)}px;
             font-family: {body_font_family};
-            font-size: 26px;
+            font-size: {round(26 * scale)}px;
             color: {accent_color};
             font-weight: bold;
         ">{_esc(slide.footer_cta)}</div>"""
 
-    title_style = f"font-family: {title_font_family}; font-size: {tpl['title_size']}; font-weight: bold; color: {tpl['title_color']}; line-height: 1.2; margin-bottom: 32px;"
+    # Scale template font sizes proportionally to canvas width
+    def _scale_px(css_px: str) -> str:
+        px = int(css_px.replace("px", ""))
+        return f"{round(px * scale)}px"
+
+    title_size_scaled = _scale_px(tpl["title_size"])
+    body_size_scaled  = _scale_px(tpl["body_size"])
+    title_margin_bottom = round(32 * scale)
+
+    title_style = f"font-family: {title_font_family}; font-size: {title_size_scaled}; font-weight: bold; color: {tpl['title_color']}; line-height: 1.2; margin-bottom: {title_margin_bottom}px;"
     if title_highlight:
         title_style += f" background-color: {title_highlight}; padding: 0 8px; border-radius: 4px; display: inline; -webkit-box-decoration-break: clone; box-decoration-break: clone;"
 
@@ -330,6 +345,8 @@ body {{ width: {width}px; height: {height}px; overflow: hidden; }}
     flex-direction: column;
     justify-content: {align_map[align_v]};
     align-items: {justify_map[align_h]};
+    padding: {padding}px;
+    box-sizing: border-box;
 ">
 {overlay}
 {pattern_overlay}
@@ -338,15 +355,13 @@ body {{ width: {width}px; height: {height}px; overflow: hidden; }}
 <div style="
     position: relative;
     z-index: 5;
-    padding: {padding}px;
     width: 100%;
     text-align: {text_align_map[align_h]};
-    max-width: 960px;
 ">
     <div style="{title_style}">{_render_inline_markup(slide.title, accent_color)}</div>
     <div style="
         font-family: {body_font_family};
-        font-size: {tpl['body_size']};
+        font-size: {body_size_scaled};
         color: {tpl['body_color']};
         line-height: 1.6;
     ">{_render_inline_markup(slide.body, accent_color)}</div>
@@ -358,17 +373,18 @@ body {{ width: {width}px; height: {height}px; overflow: hidden; }}
 </html>"""
 
 
-async def render_slides_to_zip(carousel, slides: list) -> str:
-    """Render all slides to PNG, pack into ZIP, upload to MinIO, return presigned URL."""
+async def render_slides_to_zip(carousel, slides: list) -> tuple[str, list[str]]:
+    """Render all slides to PNG, upload individually and as ZIP. Returns (zip_url, [slide_urls])."""
     from playwright.async_api import async_playwright
 
     design = carousel.design or {}
     w, h = DIMENSIONS.get(design.get("aspect_ratio", "4:5"), (1080, 1350))
+    export_id = uuid.uuid4()
 
     png_buffers = []
     async with async_playwright() as p:
         browser = await p.chromium.launch()
-        page = await browser.new_page(viewport={"width": w, "height": h})
+        page = await browser.new_page(viewport={"width": w, "height": h}, device_scale_factor=2)
         for i, slide in enumerate(slides):
             html = build_slide_html(slide, design, i + 1, len(slides), width=w, height=h)
             await page.set_content(html, wait_until="load")
@@ -383,22 +399,39 @@ async def render_slides_to_zip(carousel, slides: list) -> str:
             zf.writestr(f"slide_{idx:02d}.png", png)
     zip_buf.seek(0)
 
-    # Upload to MinIO using the internal endpoint
-    key = f"exports/{carousel.id}/{uuid.uuid4()}.zip"
+    # Upload ZIP and individual PNGs to MinIO
+    zip_key = f"exports/{carousel.id}/{export_id}/slides.zip"
+    slide_keys = [f"exports/{carousel.id}/{export_id}/slide_{idx:02d}.png" for idx in range(1, len(png_buffers) + 1)]
+
     async with get_s3_client() as s3:
         await s3.put_object(
             Bucket=settings.minio_bucket,
-            Key=key,
+            Key=zip_key,
             Body=zip_buf.getvalue(),
             ContentType="application/zip",
         )
+        for key, png in zip(slide_keys, png_buffers):
+            await s3.put_object(
+                Bucket=settings.minio_bucket,
+                Key=key,
+                Body=png,
+                ContentType="image/png",
+            )
 
-    # Generate presigned URL using the public endpoint so the signature matches what the browser sends
+    # Generate presigned URLs using the public endpoint
     async with get_s3_client_public() as s3:
-        url = await s3.generate_presigned_url(
+        zip_url = await s3.generate_presigned_url(
             "get_object",
-            Params={"Bucket": settings.minio_bucket, "Key": key},
-            ExpiresIn=86400,  # 24 hours
+            Params={"Bucket": settings.minio_bucket, "Key": zip_key},
+            ExpiresIn=86400,
         )
+        slide_urls = []
+        for key in slide_keys:
+            url = await s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": settings.minio_bucket, "Key": key},
+                ExpiresIn=86400,
+            )
+            slide_urls.append(url)
 
-    return url
+    return zip_url, slide_urls

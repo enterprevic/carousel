@@ -3,21 +3,11 @@
     <!-- ── NAV ── -->
     <nav class="fixed top-0 inset-x-0 z-50 px-4 py-3">
       <div
-        class="max-w-5xl mx-auto bg-white/80 backdrop-blur-xl border border-black/[0.08] rounded-2xl shadow-sm px-4 h-12 flex items-center justify-between"
+        class="max-w-5xl mx-auto bg-white border border-black/[0.08] rounded-2xl shadow-sm px-4 h-12 flex items-center justify-between"
       >
         <div class="flex items-center gap-2.5">
-          <div
-            class="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.30)] shrink-0 overflow-hidden"
-            style="background:#0071e3"
-          >
-            <svg viewBox="0 0 36 36" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="6" y="6" width="10" height="10" rx="3" fill="white"/>
-              <rect x="20" y="6" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-              <rect x="6" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-              <rect x="20" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.3"/>
-            </svg>
-          </div>
-          <span class="font-bold text-[#1c1c1e] tracking-tight text-[15px]">CarouselGen</span>
+          <img src="/visible.png" alt="trendsee" class="w-7 h-7 object-contain shrink-0" />
+          <span class="font-semibold text-[#1B1A25] tracking-tight" style="font-family:'Unbounded',sans-serif;font-size:15px;line-height:1.2;">trendsee</span>
         </div>
         <div class="flex items-center gap-2">
           <NuxtLink
@@ -41,12 +31,15 @@
       <!-- Radial glow -->
       <div
         class="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-[#0071e3]/10 blur-[120px] pointer-events-none"
+        style="will-change:transform;transform:translateZ(0)"
       />
       <div
         class="absolute top-40 left-1/4 w-[400px] h-[400px] rounded-full bg-[#5856d6]/8 blur-[100px] pointer-events-none"
+        style="will-change:transform;transform:translateZ(0)"
       />
       <div
         class="absolute top-20 right-1/4 w-[300px] h-[300px] rounded-full bg-[#0071e3]/6 blur-[80px] pointer-events-none"
+        style="will-change:transform;transform:translateZ(0)"
       />
 
       <div
@@ -827,16 +820,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <!-- Brand -->
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.25)] shrink-0 overflow-hidden" style="background:#0071e3">
-              <svg viewBox="0 0 36 36" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="6" y="6" width="10" height="10" rx="3" fill="white"/>
-                <rect x="20" y="6" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-                <rect x="6" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-                <rect x="20" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.3"/>
-              </svg>
-            </div>
+            <img src="/visible.png" alt="trendsee" class="w-7 h-7 object-contain shrink-0" />
             <div>
-              <span class="font-bold text-[#1c1c1e] text-[14px]">CarouselGen</span>
+              <span class="font-semibold text-[#1B1A25] text-[14px]" style="font-family:'Unbounded',sans-serif;">trendsee</span>
               <p class="text-[11px] text-[#aeaeb2] mt-0.5">© 2025 · Made for creators</p>
             </div>
           </div>
@@ -853,7 +839,8 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: "CarouselGen — AI-powered Instagram carousels" });
+definePageMeta({ layout: false })
+useHead({ title: "trendsee — AI-powered Instagram carousels" });
 
 const stats = [
   { value: "10×", label: "faster than Canva" },

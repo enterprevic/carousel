@@ -41,16 +41,36 @@ async def _run_export(export_id: uuid.UUID, carousel_id: uuid.UUID):
             if not slides:
                 raise ValueError("No slides to export")
 
-            file_url = await export_svc.render_slides_to_zip(carousel, slides)
+            file_url, slide_urls = await export_svc.render_slides_to_zip(carousel, slides)
 
             exp.status = "done"
             exp.file_url = file_url
+            exp.slide_urls = slide_urls
             await db.commit()
         except Exception as e:
             logger.error("Export %s failed: %s", export_id, e, exc_info=True)
             exp.status = "failed"
             exp.error = str(e)[:1000]
             await db.commit()
+
+
+@router.get("", response_model=ExportRead | None)
+async def get_latest_export(
+    carousel_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(require_auth),
+):
+    """Return the most recent done export for a carousel, or null if none exists."""
+    carousel = await db.get(Carousel, carousel_id)
+    if not carousel or carousel.user_id != user_id:
+        raise HTTPException(404, "Carousel not found")
+    result = await db.execute(
+        select(Export)
+        .where(Export.carousel_id == carousel_id, Export.status == "done", Export.file_url.isnot(None))
+        .order_by(Export.created_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
 
 
 @router.post("", response_model=ExportRead, status_code=201)
@@ -110,6 +130,7 @@ async def stream_export(export_id: uuid.UUID, token: str = ""):
                 "id": str(exp.id),
                 "status": exp.status,
                 "file_url": exp.file_url,
+                "slide_urls": exp.slide_urls,
                 "error": exp.error,
             }
             yield f"event: status\ndata: {json.dumps(payload)}\n\n"

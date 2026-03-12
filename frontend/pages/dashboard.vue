@@ -1,126 +1,123 @@
 <template>
-  <div class="min-h-screen bg-[#f2f2f7]">
+  <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
     <OnboardingModal />
     <ToastContainer />
-    <!-- Header -->
-    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-black/[0.06]">
-      <div class="max-w-6xl mx-auto px-5 sm:px-8 h-15 flex items-center justify-between" style="height:60px">
-        <!-- Logo -->
-        <NuxtLink to="/dashboard" class="flex items-center gap-2.5 select-none">
-          <div class="w-9 h-9 rounded-[11px] flex items-center justify-center shadow-[0_2px_8px_rgba(0,113,227,0.30)] shrink-0 overflow-hidden" style="background:#0071e3">
-            <svg viewBox="0 0 36 36" width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- top-left: fully opaque -->
-              <rect x="6" y="6" width="10" height="10" rx="3" fill="white"/>
-              <!-- top-right: slightly faded -->
-              <rect x="20" y="6" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-              <!-- bottom-left: slightly faded -->
-              <rect x="6" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.6"/>
-              <!-- bottom-right: most faded — depth cue -->
-              <rect x="20" y="20" width="10" height="10" rx="3" fill="white" fill-opacity="0.3"/>
-            </svg>
-          </div>
-          <div class="flex flex-col leading-none">
-            <span class="font-bold text-[#1c1c1e] text-[15px] tracking-tight">CarouselGen</span>
-            <span class="text-[10px] text-[#8e8e93] font-medium tracking-wide mt-0.5">AI Carousel Studio</span>
-          </div>
-        </NuxtLink>
 
-        <!-- Right side -->
-        <div class="flex items-center gap-2.5">
+    <!-- Main content area -->
+    <div class="flex-1 m-4 bg-white rounded-[20px] flex flex-col overflow-hidden">
+
+      <!-- Header bar -->
+      <div class="px-6 pt-6 pb-0 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <h1 class="text-[24px] font-semibold text-[#000000] leading-[29px]">{{ t.navCarousels }}</h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- My Context button -->
+          <button class="flex items-center gap-2 bg-[#F4F5F6] rounded-[16px] px-3 py-3 text-[#171C1F] text-[15px] font-semibold leading-[24px] tracking-[0.3px] transition-colors hover:bg-[#E6E8EA]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="px-1">{{ t.navMyContext }}</span>
+          </button>
+
+          <!-- Create button -->
           <NuxtLink to="/carousels/new"
-            class="btn-primary gap-1.5 text-[13px] px-3.5 py-2"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+            class="flex items-center gap-2 bg-[#2B31B3] rounded-[16px] px-4 py-3 text-white text-[15px] font-semibold leading-[24px] tracking-[0.3px] transition-colors hover:bg-[#2228a0]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            New
-          </NuxtLink>
-
-          <!-- Avatar -->
-          <NuxtLink to="/profile"
-            class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-2xl hover:bg-black/[0.04] transition-colors group select-none"
-            :title="username ? username : 'Profile'"
-          >
-            <div class="w-7 h-7 rounded-xl bg-[#0071e3] flex items-center justify-center text-white text-[12px] font-bold shadow-sm shrink-0">
-              {{ initial }}
-            </div>
-            <span v-if="username" class="text-[13px] font-medium text-[#3a3a3c] group-hover:text-[#1c1c1e] transition-colors hidden sm:block">
-              {{ username }}
-            </span>
+            <span class="px-1">{{ t.navCreate }}</span>
           </NuxtLink>
         </div>
       </div>
-    </header>
 
-    <main class="max-w-6xl mx-auto px-5 sm:px-8 py-10">
-
-      <!-- Empty state / getting started -->
-      <div v-if="!loading && carousels.length === 0" class="max-w-xl mx-auto py-16">
-        <div class="text-center mb-10">
-          <h2 class="text-[22px] font-bold text-[#1c1c1e] mb-2 tracking-tight">Create your first carousel</h2>
-          <p class="text-[#3a3a3c] text-[15px] leading-relaxed">
-            Paste content, let AI generate slides, then style and export.
-          </p>
-        </div>
-
-        <!-- Steps -->
-        <div class="space-y-3 mb-10">
-          <div v-for="(step, i) in gettingStartedSteps" :key="i"
-            class="card flex items-center gap-4 px-5 py-4">
-            <div class="w-8 h-8 rounded-xl bg-[#0071e3]/10 flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="step.icon" />
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-[#1c1c1e]">{{ step.title }}</p>
-              <p class="text-xs text-[#8e8e93] mt-0.5">{{ step.desc }}</p>
-            </div>
-            <div class="w-6 h-6 rounded-full bg-[#f2f2f7] flex items-center justify-center shrink-0 text-xs font-bold text-[#8e8e93]">
-              {{ i + 1 }}
-            </div>
-          </div>
-        </div>
-
-        <NuxtLink to="/carousels/new" class="btn-primary w-full py-3 text-[15px] justify-center">
-          Get started
-        </NuxtLink>
-      </div>
-
-      <!-- Loading skeletons -->
-      <div v-else-if="loading">
-        <div class="flex items-center justify-between mb-7">
-          <div class="h-7 w-40 bg-[#e5e5ea] rounded-xl animate-pulse" />
-          <div class="h-5 w-16 bg-[#e5e5ea] rounded-lg animate-pulse" />
-        </div>
+      <!-- Loading -->
+      <div v-if="loading" class="flex-1 px-6 pt-6">
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div v-for="i in 8" :key="i" class="card animate-pulse">
-            <div class="slide-aspect bg-[#f2f2f7]" />
+          <div v-for="i in 8" :key="i" class="bg-[#F4F5F6] rounded-2xl animate-pulse">
+            <div class="slide-aspect" />
             <div class="p-4 space-y-2.5">
-              <div class="h-4 bg-[#e5e5ea] rounded-lg w-3/4" />
-              <div class="h-3 bg-[#e5e5ea] rounded-lg w-1/2" />
-              <div class="h-9 bg-[#e5e5ea] rounded-xl mt-3" />
+              <div class="h-4 bg-[#E6E8EA] rounded-lg w-3/4" />
+              <div class="h-3 bg-[#E6E8EA] rounded-lg w-1/2" />
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else-if="carousels.length === 0"
+        class="flex-1 flex flex-col items-center justify-center px-6 gap-8">
+
+        <!-- 3 tilted card mockups -->
+        <div class="flex items-center justify-center gap-2 select-none">
+          <!-- Left card (rotated -8deg) -->
+          <div class="w-[95px] h-[130px] rounded-[12px] bg-[#E6E8EA] overflow-hidden flex flex-col gap-[7px] p-[12px]"
+            style="transform: rotate(-8deg); transform-origin: center;">
+            <div class="flex flex-col gap-1">
+              <div class="w-full h-[15px] rounded-[6px] bg-[#A0ADB4]" />
+              <div class="w-[55%] h-[14px] rounded-[6px] bg-[#A0ADB4]" />
+            </div>
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+          </div>
+
+          <!-- Center card (no rotation, larger) -->
+          <div class="w-[124px] h-[170px] rounded-[16px] bg-[#E6E8EA] overflow-hidden flex flex-col gap-[10px] p-[16px]">
+            <div class="w-[78px] h-[19px] rounded-[8px] bg-[#A0ADB4]" />
+            <div class="w-full h-[8px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[8px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[8px] rounded-full bg-[#A0ADB4]" />
+          </div>
+
+          <!-- Right card (rotated +8deg) -->
+          <div class="w-[95px] h-[130px] rounded-[12px] bg-[#E6E8EA] overflow-hidden flex flex-col gap-[7px] p-[12px]"
+            style="transform: rotate(8deg); transform-origin: center;">
+            <div class="flex flex-col gap-1">
+              <div class="w-[60px] h-[14px] rounded-[6px] bg-[#A0ADB4]" />
+              <div class="w-full h-[14px] rounded-[6px] bg-[#A0ADB4]" />
+            </div>
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+            <div class="w-full h-[6px] rounded-full bg-[#A0ADB4]" />
+          </div>
+        </div>
+
+        <!-- Text + CTA -->
+        <div class="flex flex-col items-center gap-6 max-w-[600px] text-center">
+          <div class="flex flex-col gap-3">
+            <h2 class="text-[20px] font-semibold text-[#000000] leading-[24px] tracking-[0.15px]">
+              {{ t.dashCreateTitle }}
+            </h2>
+            <p class="text-[16px] text-[#4E616B] leading-[24px] tracking-[0.5px]">
+              {{ t.dashCreateDesc }}
+            </p>
+          </div>
+
+          <NuxtLink to="/carousels/new"
+            class="flex items-center gap-2 bg-[#2B31B3] rounded-[16px] px-6 py-4 text-white text-[17px] font-semibold leading-[24px] tracking-[0.25px] transition-colors hover:bg-[#2228a0]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>{{ t.dashAdd }}</span>
+          </NuxtLink>
         </div>
       </div>
 
       <!-- Carousels grid -->
-      <div v-else>
+      <div v-else class="flex-1 overflow-y-auto px-6 pt-6 pb-6">
         <div class="flex items-center justify-between mb-6">
-          <div>
-            <h1 class="text-[22px] font-bold tracking-tight text-[#1c1c1e]">My Carousels</h1>
-          </div>
-          <!-- Stats pills -->
-          <div class="flex items-center gap-1.5 sm:gap-2 text-xs flex-wrap justify-end">
-            <span class="px-2 sm:px-2.5 py-1 rounded-full bg-white border border-[#e5e5ea] text-[#3a3a3c] font-medium whitespace-nowrap">
-              {{ stats.total }} total
+          <div class="flex items-center gap-2 text-xs flex-wrap">
+            <span class="px-2.5 py-1 rounded-full bg-[#F4F5F6] border border-[#E6E8EA] text-[#3a3a3c] font-medium">
+              {{ stats.total }} {{ t.dashTotal }}
             </span>
-            <span v-if="stats.ready > 0" class="px-2 sm:px-2.5 py-1 rounded-full bg-[#34c759]/10 text-[#1a7f37] font-medium whitespace-nowrap">
-              {{ stats.ready }} ready
+            <span v-if="stats.ready > 0" class="px-2.5 py-1 rounded-full bg-[#34c759]/10 text-[#1a7f37] font-medium">
+              {{ stats.ready }} {{ t.dashReady }}
             </span>
-            <span v-if="stats.draft > 0" class="px-2 sm:px-2.5 py-1 rounded-full bg-[#f2f2f7] text-[#8e8e93] font-medium whitespace-nowrap">
-              {{ stats.draft }} draft
+            <span v-if="stats.draft > 0" class="px-2.5 py-1 rounded-full bg-[#F4F5F6] text-[#8e8e93] font-medium">
+              {{ stats.draft }} {{ t.dashDraft }}
             </span>
           </div>
         </div>
@@ -136,32 +133,26 @@
           />
         </div>
       </div>
-    </main>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Carousel, Slide } from "~/types"
 
+definePageMeta({ layout: 'default', ssr: false })
+
 const { fetchCarousels, deleteCarousel } = useCarousels()
+const { t } = useLang()
 const { startGeneration, pollGeneration } = useGeneration()
-const { authHeaders, logout, getUsername } = useAuth()
+const { authHeaders } = useAuth()
 const { show: showToast } = useToast()
 const config = useRuntimeConfig()
-
-const username = import.meta.client ? getUsername() : ''
-const initial = computed(() => username?.[0]?.toUpperCase() ?? '?')
 
 const loading = ref(true)
 const carousels = ref<Carousel[]>([])
 const firstSlides = ref<Record<string, Slide>>({})
-
-const gettingStartedSteps = [
-  { title: "Add your content", desc: "Paste text, a video URL, or a list of links.", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-  { title: "Generate slides with AI", desc: "Choose slide count, language, and style.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-  { title: "Design each slide", desc: "Edit text, pick templates, upload backgrounds.", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
-  { title: "Export as ZIP", desc: "Download 1080×1350 px PNGs ready for Instagram.", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" },
-]
 
 const stats = computed(() => ({
   total: carousels.value.length,
@@ -227,8 +218,6 @@ const handleDelete = async (carouselId: string) => {
   }
 }
 
-// Poll only carousels that were already generating when the page loaded.
-// Carousels where generation is triggered from this page use SSE via handleGenerate.
 let pollInterval: ReturnType<typeof setInterval> | null = null
 
 const pollStaleGenerating = async () => {
