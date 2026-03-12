@@ -2,7 +2,12 @@
 
 AI-powered Instagram carousel generator. Paste text, a YouTube link, or any URL — AI writes the slides, you style and export as high-resolution PNGs.
 
----
+---<img width="1364" height="982" alt="landing page carousel" src="https://github.com/user-attachments/assets/bca31b52-1026-49bd-9109-913ad6e6dd27" />
+<img width="1044" height="887" alt="features" src="https://github.com/user-attachments/assets/1883c91a-c3c7-41f8-92e5-3c3400618b7d" />
+<img width="1089" height="789" alt="features 2" src="https://github.com/user-attachments/assets/5f9f1377-6ebb-4650-aba1-4ab0d89e7d81" />
+<img width="1612" height="887" alt="dashboard carousel" src="https://github.com/user-attachments/assets/758b7ae1-ebd4-452a-af8e-013940a1ab6d" />
+<img width="1668" height="936" alt="showing image size" src="https://github.com/user-attachments/assets/8ebff6f8-76aa-46c9-b08a-c82ba05d77ea" />
+
 
 ## Stack
 
